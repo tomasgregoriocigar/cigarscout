@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="TrustedCigar">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.json">
-<title>Scan a cigar — TrustedCigar (beta)</title>
+<title>Scan a cigar — TrustedCigar</title>
 <style>
   :root{
     --bg:#171310; --panel:#221c17; --panel2:#2b241d; --ink:#f3ead9; --muted:#b8a98f;
@@ -58,7 +58,7 @@
 <body>
 <header>
   <h1><span class="dot"></span>TrustedCigar — Scan a cigar <span style="color:var(--gold);font-size:14px;vertical-align:3px">BETA</span></h1>
-  <div class="sub">Point the camera at a cigar's box or cello barcode and get the verdict: today's price per stick across retailers that meet <a href="standard.html" style="color:var(--gold)">the Standard</a>. The code is read on your phone; no account, no tracking. Demo verdicts below use reference prices while the full catalog comes online. <a href="index.html" style="color:var(--gold)">&#8592; Home</a></div>
+  <div class="sub">Point the camera at a cigar's box or cello barcode and get the verdict: today's price per stick across retailers that meet <a href="standard.html" style="color:var(--gold)">the Standard</a>. The code is read on your phone; no account, no tracking. The catalog is young — it opens with the cigars we can verify prices for, and it grows weekly. <a href="index.html" style="color:var(--gold)">&#8592; Home</a></div>
 </header>
 
 <div class="card">
@@ -87,23 +87,25 @@
 </div>
 
 <div class="card">
-  <div style="font-weight:700">Demo set — try one</div>
+  <div style="font-weight:700">In the catalog now — try one</div>
   <div class="targets" style="margin-top:6px">
     1. <b>Henry Clay War Hawk Toro</b> — scan the cello sticker<br>
     2. <b>Dunbarton Umbagog Toro Toro</b> — box or bundle sticker<br>
     3. <b>Toscano Antico</b> — pack sticker<br>
-    <span class="small">Works in shop light and humidor light alike — dim light is the honest test.</span>
+    4. <b>Don Pepin Garcia Tabacos Baez Serie SF Robusto</b> — box sticker<br>
+    <span class="small">Works in shop light and humidor light alike.</span>
   </div>
 </div>
 
-<p class="small" style="text-align:center;margin:18px 0 26px">TrustedCigar scanner — beta · demo verdicts use reference prices · the catalog grows weekly · adults 21+</p>
+<p class="small" style="text-align:center;margin:18px 0 26px">TrustedCigar scanner · prices shown are verified reference lines · the catalog grows weekly · adults 21+</p>
 
 <script>
 (function(){
   var KNOWN = {
     "071610511231": {name:"Henry Clay War Hawk Toro", meta:"Altadis · Connecticut · Toro 6 × 50", line:"$9.00 / stick", note:"Reference line from a Cigar Page 5-pack, Oct 2026."},
     "019962729225": {name:"Dunbarton Umbagog Toro Toro", meta:"Dunbarton Tobacco & Trust · 6 × 52", line:"$9.95 / stick", note:"Reference line from a Neptune bundle of 10, Sep 2026."},
-    "8059145100665": {name:"Toscano Antico", meta:"Toscano · Italian · box of 50 format", line:"$4.50 / stick", note:"Reference line from Neptune, 2026."}
+    "8059145100665": {name:"Toscano Antico", meta:"Toscano · Italian · box of 50 format", line:"$4.50 / stick", note:"Reference line from Neptune, 2026."},
+    "817673010201": {name:"Don Pepin Garcia Tabacos Baez Serie SF Robusto", meta:"Don Pepin Garcia · Nicaragua · Robusto", line:"$3.40 / stick", note:"Reference line from a Neptune box of 20, Oct 2026."}
   };
   var libLoaded=false, scanner=null, scanning=false, startStamp=0, firstReadPending=false, torchOn=false;
   var logRows=[];
@@ -134,16 +136,16 @@
     if(rec){
       $("vName").textContent=rec.name;
       $("vMeta").textContent=rec.meta+" · UPC "+code;
-      var pill=$("vPill"); pill.className="pill known"; pill.textContent="✓ Recognized — demo entry";
+      var pill=$("vPill"); pill.className="pill known"; pill.textContent="✓ In the catalog";
       $("vLines").innerHTML="<span>Reference good-price line:</span> <b>"+rec.line+"</b><br>"+rec.note+
-        "<br><span>Beta note: live prices across Approved retailers land here as the catalog comes online.</span>";
+        "<br><span>At or under that line at an Approved retailer is a good price.</span>";
       logResult(code, ms, how, "Matched — "+rec.name);
     } else {
       $("vName").textContent="Code read: "+code;
       $("vMeta").textContent=(chk===true?"Valid barcode (check digit OK)":(chk===false?"Barcode read, but the check digit fails — likely a glare misread. Try again.":"Barcode read"))+
-        " · not in the beta demo set yet";
-      var pill2=$("vPill"); pill2.className="pill good"; pill2.textContent="✓ The scan itself worked";
-      $("vLines").innerHTML="Your phone read that code cleanly. As the catalog grows, any cigar's code resolves to its price verdict across Approved retailers.";
+        " · not in the catalog yet";
+      var pill2=$("vPill"); pill2.className="pill known"; pill2.textContent="Not in the catalog yet";
+      $("vLines").innerHTML="That cigar isn't in the TrustedCigar catalog yet — the catalog opens with the cigars we can verify prices for and grows weekly. Holding a price in front of you? Check it per stick on the <a href='prices.html' style='color:var(--gold)'>price checks page</a>.";
       logResult(code, ms, how, chk===false?"Read, check digit failed":"Read, valid code");
     }
     beep();
@@ -177,7 +179,7 @@
     firstReadPending=false;
     var ms=Math.round(performance.now()-startStamp);
     showVerdict(String(text).replace(/\D/g,"")||text, "Camera", ms);
-    setStatus("Read in <b>"+(ms/1000).toFixed(1)+"s</b>. Keep scanning other sticks, or stop the camera below.");
+    setStatus("<b>Got it.</b> Keep scanning other sticks, or stop the camera below.");
   }
 
   $("btnStart").addEventListener("click", function(){
@@ -195,7 +197,7 @@
         onDecode, function(){})
       .then(function(){ scanning=true; $("btnStart").textContent="Stop camera";
         $("btnTorch").disabled=false;
-        setStatus("Camera live — first read is being timed. Hold the barcode steady, 4–8 inches away."); })
+        setStatus("Camera live. Hold the barcode steady, 4–8 inches away."); })
       .catch(function(err){ firstReadPending=false;
         setStatus("<b>Camera wouldn't start.</b> If you denied permission, allow it in Settings › Safari › Camera, then try again. You can also use <b>Photograph instead</b>. ("+String(err).slice(0,120)+")"); });
     });
@@ -221,9 +223,9 @@
       scanner.scanFile(f, false).then(function(text){
         var ms=Math.round(performance.now()-t0);
         showVerdict(String(text).replace(/\D/g,"")||text, "Photo", ms);
-        setStatus("Photo read in <b>"+(ms/1000).toFixed(1)+"s</b>.");
+        setStatus("<b>Photo read.</b>");
       }).catch(function(){
-        setStatus("<b>No barcode found in that photo.</b> Get closer, fill the frame with the sticker, and avoid glare — then try again. (This counts as a photo-mode miss; it's useful data too.)");
+        setStatus("<b>No barcode found in that photo.</b> Get closer, fill the frame with the sticker, and avoid glare, then try again.");
         logResult("—", null, "Photo", "No barcode found");
       });
     });
