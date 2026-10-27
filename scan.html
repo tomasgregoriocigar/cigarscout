@@ -51,6 +51,7 @@
     background:var(--panel2);color:var(--ink);font-size:16px;margin-top:10px}
   .targets{font-size:14px;line-height:1.6}
   .targets b{color:var(--gold)}
+  .bandtext{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.5;word-break:break-word}
   .flash{animation:fl .5s}
   @keyframes fl{0%{background:#2e4a33}100%{background:var(--panel)}}
 </style>
@@ -58,17 +59,21 @@
 <body>
 <header>
   <h1><span class="dot"></span>TrustedCigar — Scan a cigar <span style="color:var(--gold);font-size:14px;vertical-align:3px">BETA</span></h1>
-  <div class="sub">Point the camera at a cigar's box or cello barcode and get the verdict: today's price per stick across retailers that meet <a href="standard.html" style="color:var(--gold)">the Standard</a>. The code is read on your phone; no account, no tracking. The catalog is young — it opens with the cigars we can verify prices for, and it grows weekly. <a href="index.html" style="color:var(--gold)">&#8592; Home</a></div>
+  <div class="sub">Point the camera at a cigar's box or cello barcode and get the verdict: today's price per stick across retailers that meet <a href="standard.html" style="color:var(--gold)">the Standard</a>. No barcode on the stick? Photograph the band — the lettering on it identifies the cigar. Everything is read on your phone; no account, no tracking. The catalog is young — it opens with the cigars we can verify prices for, and it grows weekly. <a href="index.html" style="color:var(--gold)">&#8592; Home</a></div>
 </header>
 
 <div class="card">
   <div id="reader"></div>
   <button id="btnStart">Start camera scan</button>
   <div class="row">
-    <button id="btnPhoto" class="secondary">Photograph instead</button>
+    <button id="btnPhoto" class="secondary">Photograph the barcode</button>
+    <button id="btnBand" class="secondary">Photograph the band</button>
+  </div>
+  <div class="row">
     <button id="btnTorch" class="secondary" disabled>Torch</button>
   </div>
   <input id="photoInput" type="file" accept="image/*" capture="environment" style="display:none">
+  <input id="bandInput" type="file" accept="image/*" capture="environment" style="display:none">
   <div class="status" id="status">Camera is off. Tap <b>Start camera scan</b> and allow camera access.</div>
 </div>
 
@@ -77,6 +82,17 @@
   <div class="meta" id="vMeta"></div>
   <div><span class="pill" id="vPill"></span></div>
   <div class="lines" id="vLines"></div>
+</div>
+
+<div class="verdict" id="bandCard">
+  <div class="name" id="bName"></div>
+  <div class="meta" id="bMeta"></div>
+  <div><span class="pill" id="bPill"></span></div>
+  <div class="lines" id="bLines"></div>
+  <div class="row" id="bBtns" style="display:none">
+    <button id="btnBandYes">Yes — show the verdict</button>
+    <button id="btnBandNo" class="secondary">Not this one</button>
+  </div>
 </div>
 
 <div class="card">
@@ -93,7 +109,7 @@
     2. <b>Dunbarton Umbagog Toro Toro</b> — box or bundle sticker<br>
     3. <b>Toscano Antico</b> — pack sticker<br>
     4. <b>Don Pepin Garcia Tabacos Baez Serie SF Robusto</b> — box sticker<br>
-    <span class="small">Works in shop light and humidor light alike.</span>
+    <span class="small">Works in shop light and humidor light alike. No sticker on the stick? Photograph the band — the lettering works too.</span>
   </div>
 </div>
 
@@ -107,6 +123,61 @@
     "8059145100665": {name:"Toscano Antico", meta:"Toscano · Italian · box of 50 format", line:"$4.50 / stick", note:"Reference line from Neptune, 2026."},
     "817673010201": {name:"Don Pepin Garcia Tabacos Baez Serie SF Robusto", meta:"Don Pepin Garcia · Nicaragua · Robusto", line:"$3.40 / stick", note:"Reference line from a Neptune box of 20, Oct 2026."}
   };
+
+  /* Band-lettering index: the catalog names, tokenized, so a band photo's
+     OCR text can be matched against them. Built from KNOWN — nothing new
+     to maintain when the catalog grows. */
+  var BAND_STOP={"THE":1,"DE":1,"Y":1,"OF":1,"LA":1};
+  /* Words that appear on countless bands (vitolas, line words, leaf words).
+     They count toward a multi-word match, but one of them alone never
+     names a cigar — otherwise any band reading "ROBUSTO" would guess. */
+  var BAND_GENERIC={"SERIE":1,"TORO":1,"ROBUSTO":1,"GORDO":1,"CHURCHILL":1,"LANCERO":1,
+    "PERFECTO":1,"GRAN":1,"RESERVA":1,"MADURO":1,"NATURAL":1,"HABANO":1,"COROJO":1,
+    "OSCURO":1,"CONNECTICUT":1,"TABACOS":1,"TABACO":1,"CIGAR":1,"CIGARS":1};
+  function bandTokens(s){
+    return String(s||"").toUpperCase().replace(/[^A-Z0-9 ]+/g," ").split(/\s+/)
+      .filter(function(w){ return w && !BAND_STOP[w]; });
+  }
+  var NAME_INDEX=(function(){
+    var idx=[], freq={};
+    Object.keys(KNOWN).forEach(function(code){
+      var toks=[], seen={};
+      bandTokens(KNOWN[code].name).forEach(function(t){ if(!seen[t]){ seen[t]=1; toks.push(t); } });
+      idx.push({code:code, rec:KNOWN[code], tokens:toks});
+    });
+    idx.forEach(function(e){ e.tokens.forEach(function(t){ freq[t]=(freq[t]||0)+1; }); });
+    idx.forEach(function(e){ e.freq=freq; });
+    return idx;
+  })();
+
+  /* Match OCR band text against the name index. A cigar becomes a candidate
+     only on real evidence: at least two of its name tokens read on the band,
+     or a single token that belongs to it alone in the catalog (UMBAGOG,
+     TOSCANO, BAEZ…). Anything less is honestly "no match", never a guess. */
+  function matchBand(text){
+    var ocrToks=bandTokens(text), ocrSet={}, joined=ocrToks.join("");
+    ocrToks.forEach(function(t){ ocrSet[t]=1; });
+    var out=[];
+    NAME_INDEX.forEach(function(e){
+      var matched=[];
+      e.tokens.forEach(function(t){ if(ocrSet[t]) matched.push(t); });
+      /* OCR sometimes merges two words (WAR HAWK → WARHAWK): check joined pairs. */
+      for(var i=0;i+1<e.tokens.length;i++){
+        if(joined.indexOf(e.tokens[i]+e.tokens[i+1])>=0){
+          if(matched.indexOf(e.tokens[i])<0) matched.push(e.tokens[i]);
+          if(matched.indexOf(e.tokens[i+1])<0) matched.push(e.tokens[i+1]);
+        }
+      }
+      var ratio=e.tokens.length? matched.length/e.tokens.length : 0;
+      var distinctive=matched.some(function(t){ return e.freq[t]===1 && t.length>=4 && !BAND_GENERIC[t]; });
+      if(matched.length>=2 || (matched.length===1 && distinctive)){
+        out.push({entry:e, matched:matched, ratio:ratio,
+          conf:(matched.length>=3 || ratio>=0.5)?"strong":"possible"});
+      }
+    });
+    out.sort(function(a,b){ return (b.matched.length-a.matched.length)||(b.ratio-a.ratio); });
+    return out.slice(0,2);
+  }
   var libLoaded=false, scanner=null, scanning=false, startStamp=0, firstReadPending=false, torchOn=false;
   var logRows=[];
   var $=function(id){return document.getElementById(id)};
@@ -130,15 +201,20 @@
 
   function logResult(){ /* site build: no session log UI */ }
 
+  function renderKnown(rec, suffix){
+    var v=$("verdict"); v.style.display="block";
+    $("vName").textContent=rec.name;
+    $("vMeta").textContent=rec.meta+" · "+suffix;
+    var pill=$("vPill"); pill.className="pill known"; pill.textContent="✓ In the catalog";
+    $("vLines").innerHTML="<span>Reference good-price line:</span> <b>"+rec.line+"</b><br>"+rec.note+
+      "<br><span>At or under that line at an Approved retailer is a good price.</span>";
+  }
+
   function showVerdict(code, how, ms){
     var rec=KNOWN[code]; var chk=validCheckDigit(code);
     var v=$("verdict"); v.style.display="block";
     if(rec){
-      $("vName").textContent=rec.name;
-      $("vMeta").textContent=rec.meta+" · UPC "+code;
-      var pill=$("vPill"); pill.className="pill known"; pill.textContent="✓ In the catalog";
-      $("vLines").innerHTML="<span>Reference good-price line:</span> <b>"+rec.line+"</b><br>"+rec.note+
-        "<br><span>At or under that line at an Approved retailer is a good price.</span>";
+      renderKnown(rec, "UPC "+code);
       logResult(code, ms, how, "Matched — "+rec.name);
     } else {
       $("vName").textContent="Code read: "+code;
@@ -199,7 +275,7 @@
         $("btnTorch").disabled=false;
         setStatus("Camera live. Hold the barcode steady, 4–8 inches away."); })
       .catch(function(err){ firstReadPending=false;
-        setStatus("<b>Camera wouldn't start.</b> If you denied permission, allow it in Settings › Safari › Camera, then try again. You can also use <b>Photograph instead</b>. ("+String(err).slice(0,120)+")"); });
+        setStatus("<b>Camera wouldn't start.</b> If you denied permission, allow it in Settings › Safari › Camera, then try again. You can also use <b>Photograph the barcode</b> or <b>Photograph the band</b>. ("+String(err).slice(0,120)+")"); });
     });
   });
 
@@ -236,6 +312,138 @@
     var code=$("manual").value.replace(/\D/g,"");
     if(!code){ setStatus("Type a UPC first."); return; }
     showVerdict(code, "Typed", null);
+  });
+
+  /* ---- Photograph the band: on-device OCR of the band lettering ---- */
+  var bandCands=[], bandIdx=0, bandText="";
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(ch){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];
+    });
+  }
+  function showBandCard(){
+    var c=$("bandCard"); c.style.display="block";
+    c.scrollIntoView({behavior:"smooth", block:"center"});
+  }
+  function renderBandCandidate(){
+    var c=bandCands[bandIdx]; if(!c) return;
+    $("bName").textContent="Looks like: "+c.entry.rec.name;
+    $("bMeta").textContent=c.entry.rec.meta+(bandIdx>0?" · next closest match":"");
+    var pill=$("bPill"); pill.style.display="inline-block";
+    pill.className="pill "+(c.conf==="strong"?"good":"known");
+    pill.textContent=(c.conf==="strong"?"Strong match":"Possible match")+" · band read: "+c.matched.join(" ");
+    $("bLines").innerHTML="Is that the cigar in your hand? If it is, we'll show its price verdict."+
+      (bandText? "<div class='bandtext'>Lettering we read: &ldquo;"+escapeHtml(bandText.slice(0,140))+"&rdquo;</div>":"");
+    $("bBtns").style.display="flex";
+    showBandCard();
+  }
+  function renderBandNoMatch(){
+    $("bName").textContent="No match yet";
+    $("bMeta").textContent="That cigar isn't matched to the catalog yet.";
+    $("bPill").style.display="none";
+    $("bLines").innerHTML=(bandText
+      ? "Here is the lettering the band gave us:<div class='bandtext'>&ldquo;"+escapeHtml(bandText.slice(0,180))+"&rdquo;</div>"
+      : "We couldn't read any lettering on that photo. A straight-on shot that fills the frame with the band, out of direct glare, reads best.")+
+      "<div style='margin-top:8px'>Holding a price in front of you? Check it per stick on the <a href='prices.html' style='color:var(--gold)'>price checks page</a>. The catalog grows weekly — a band we can't match today may match on your next visit.</div>";
+    $("bBtns").style.display="none";
+    showBandCard();
+  }
+  function renderBandError(html){
+    $("bName").textContent="The band reader didn't run";
+    $("bMeta").textContent="";
+    $("bPill").style.display="none";
+    $("bLines").innerHTML=html+" You can still scan the barcode, type the UPC below, or check a price per stick on the <a href='prices.html' style='color:var(--gold)'>price checks page</a>.";
+    $("bBtns").style.display="none";
+    showBandCard();
+  }
+
+  function loadOcrLib(cb, err){
+    if(window.Tesseract) return cb();
+    var urls=["https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js",
+              "https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"];
+    var i=0;
+    (function next(){
+      if(i>=urls.length){ err(); return; }
+      var s=document.createElement("script"); s.src=urls[i++];
+      s.onload=function(){ if(window.Tesseract) cb(); else next(); };
+      s.onerror=next;
+      document.head.appendChild(s);
+    })();
+  }
+
+  /* Shrink a big phone photo before OCR — faster reads, same lettering.
+     Any failure along the way just hands back the original file. */
+  function prepImage(file, cb){
+    try{
+      var url=URL.createObjectURL(file), img=new Image();
+      img.onload=function(){
+        try{
+          var w=img.naturalWidth, h=img.naturalHeight, scale=Math.min(1, 1600/Math.max(w,h));
+          if(!(scale<1)){ URL.revokeObjectURL(url); cb(file); return; }
+          var c=document.createElement("canvas");
+          c.width=Math.round(w*scale); c.height=Math.round(h*scale);
+          c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+          URL.revokeObjectURL(url);
+          if(c.toBlob){ c.toBlob(function(b){ cb(b||file); }, "image/jpeg", 0.92); }
+          else cb(file);
+        }catch(e){ cb(file); }
+      };
+      img.onerror=function(){ URL.revokeObjectURL(url); cb(file); };
+      img.src=url;
+    }catch(e){ cb(file); }
+  }
+
+  function runBandPhoto(file){
+    bandCands=[]; bandIdx=0; bandText="";
+    $("bName").textContent="Reading the band…";
+    $("bMeta").textContent="The lettering is read on your phone — the photo itself doesn't leave this device.";
+    $("bPill").style.display="none";
+    $("bLines").innerHTML="The first read takes a little longer while the reading engine loads; after that it's quicker.";
+    $("bBtns").style.display="none";
+    showBandCard();
+    loadOcrLib(function(){
+      prepImage(file, function(img){
+        try{
+          window.Tesseract.recognize(img, "eng", { logger:function(m){
+            if(m && m.status==="recognizing text" && typeof m.progress==="number"){
+              $("bName").textContent="Reading the band… "+Math.round(m.progress*100)+"%";
+            }
+          }}).then(function(res){
+            bandText=String((res && res.data && res.data.text)||"").replace(/\s+/g," ").trim();
+            bandCands=matchBand(bandText);
+            bandIdx=0;
+            if(bandCands.length) renderBandCandidate(); else renderBandNoMatch();
+          }).catch(function(){
+            renderBandError("<b>The reader hit a snag on that photo.</b> A straighter, closer shot of the band is worth another try.");
+          });
+        }catch(e){
+          renderBandError("<b>The reader couldn't start.</b>");
+        }
+      });
+    }, function(){
+      renderBandError("<b>Couldn't load the band reader.</b> Check your connection and try again.");
+    });
+  }
+
+  $("btnBand").addEventListener("click", function(){ $("bandInput").click(); });
+  $("bandInput").addEventListener("change", function(ev){
+    var f=ev.target.files && ev.target.files[0];
+    ev.target.value="";
+    if(!f) return;
+    runBandPhoto(f);
+  });
+  $("btnBandYes").addEventListener("click", function(){
+    var c=bandCands[bandIdx]; if(!c) return;
+    $("bandCard").style.display="none";
+    renderKnown(c.entry.rec, "matched from your band photo");
+    beep();
+    $("verdict").scrollIntoView({behavior:"smooth", block:"center"});
+    setStatus("<b>Matched from the band.</b> That's the verdict for the cigar you confirmed.");
+  });
+  $("btnBandNo").addEventListener("click", function(){
+    bandIdx++;
+    if(bandIdx<bandCands.length) renderBandCandidate(); else renderBandNoMatch();
   });
 
 })();
