@@ -1,0 +1,63 @@
+/* TrustedCigar — warm, photo-first consumer design (standing exception to the terminal style) */
+:root{
+  --ink:#241a12; --paper:#faf5ec; --card:#fffdf8; --amber:#b4762a; --amber-dark:#8a5a1d;
+  --cedar:#6d4c2f; --line:#e5d9c5; --good:#2e7d43; --warn:#b07d10; --bad:#b3382e;
+  --muted:#7a6a58; --radius:14px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.55;font-size:17px}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;line-height:1.2;margin:0 0 .5em}
+a{color:var(--amber-dark)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 20px}
+header.site{background:linear-gradient(135deg,#2b1d10,#4a2f16 55%,#6d4c2f);color:#f7ead2}
+header.site .wrap{padding:18px 20px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .mark{width:42px;height:42px;border-radius:50%;border:2px solid #d9a441;
+  display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;
+  font-size:20px;color:#d9a441;background:rgba(0,0,0,.25)}
+.brand .name{font-family:Georgia,serif;font-size:26px;letter-spacing:.3px}
+.brand .name b{color:#eec27a;font-weight:600}
+nav.main{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}
+nav.main a{color:#f0dfc0;text-decoration:none;font-size:15px}
+nav.main a:hover{text-decoration:underline}
+.hero{background:linear-gradient(160deg,#3a2712,#5d3d1c 60%,#7a5226);color:#fbf2dd}
+.hero .wrap{padding:56px 20px 48px}
+.hero h1{font-size:42px;max-width:15em}
+.hero p.lede{font-size:20px;max-width:38em;color:#f3e3c2}
+.cta{display:inline-block;background:#d9a441;color:#241a12;font-weight:700;text-decoration:none;
+  padding:13px 22px;border-radius:10px;margin:10px 10px 0 0}
+.cta.ghost{background:transparent;color:#f3e3c2;border:1.5px solid #d9a441}
+section{padding:38px 0}
+h2.sec{font-size:28px}
+.sub{color:var(--muted);max-width:44em}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.card h3{font-size:19px}
+.badge{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:.4px;
+  padding:3px 10px;border-radius:999px;text-transform:uppercase}
+.badge.approved{background:#e3f2e7;color:var(--good);border:1px solid #bfe0c9}
+.badge.caution{background:#fbf0d3;color:var(--warn);border:1px solid #ecd9a0}
+.badge.below{background:#fbe7e4;color:var(--bad);border:1px solid #f0c4bf}
+.badge.limited{background:#efe9dd;color:var(--muted);border:1px solid var(--line)}
+table.index{width:100%;border-collapse:collapse;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+table.index th,table.index td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+table.index th{background:#f3e9d4;font-family:Georgia,serif}
+table.index tr:last-child td{border-bottom:none}
+.ev{color:var(--muted);font-size:14.5px}
+.pillars{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:16px}
+.pillar{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.pillar .w{font-family:Georgia,serif;font-size:26px;color:var(--amber-dark)}
+.note{background:#f6eeda;border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+footer.site{border-top:1px solid var(--line);padding:28px 0 44px;color:var(--muted);font-size:14.5px}
+/* Age gate — overlay only, never a redirect */
+#agegate{position:fixed;inset:0;background:rgba(28,18,8,.92);display:flex;
+  align-items:center;justify-content:center;z-index:50;padding:20px}
+#agegate .box{background:var(--card);border-radius:16px;max-width:420px;padding:28px;text-align:center}
+#agegate button{background:var(--amber);color:#fff;border:none;font-size:16.5px;font-weight:700;
+  padding:12px 20px;border-radius:10px;cursor:pointer;width:100%;margin-top:10px}
+#agegate .no{background:transparent;color:var(--muted);border:1px solid var(--line)}
+@media (max-width:640px){.hero h1{font-size:31px}.hero p.lede{font-size:18px}}
