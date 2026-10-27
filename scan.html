@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#171310">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TrustedCigar">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<title>Scan a cigar — TrustedCigar (beta)</title>
+<style>
+  :root{
+    --bg:#171310; --panel:#221c17; --panel2:#2b241d; --ink:#f3ead9; --muted:#b8a98f;
+    --gold:#d9a441; --green:#57c46a; --red:#e2604d; --line:#3a322a;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);}
+  header{padding:18px 2px 6px}
+  h1{font-size:22px;margin:0;letter-spacing:.2px}
+  h1 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--green);margin-right:8px;vertical-align:2px}
+  .sub{color:var(--muted);font-size:14px;margin-top:5px;line-height:1.45}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:14px}
+  #reader{width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:180px}
+  #reader video{width:100%!important;height:auto!important;display:block}
+  button{appearance:none;border:0;border-radius:12px;padding:14px 16px;font-size:16px;font-weight:600;
+    background:var(--gold);color:#1d1607;width:100%;margin-top:10px;cursor:pointer}
+  button.secondary{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
+  button:disabled{opacity:.45}
+  .row{display:flex;gap:10px}.row button{flex:1}
+  .status{font-size:14px;color:var(--muted);margin-top:10px;min-height:20px;line-height:1.45}
+  .status b{color:var(--ink)}
+  .verdict{display:none;margin-top:14px;background:var(--panel);border:1px solid var(--gold);border-radius:16px;padding:16px}
+  .verdict .name{font-size:19px;font-weight:700}
+  .verdict .meta{color:var(--muted);font-size:13px;margin-top:3px}
+  .pill{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700}
+  .pill.good{background:#17351d;color:var(--green);border:1px solid var(--green)}
+  .pill.known{background:#33270f;color:var(--gold);border:1px solid var(--gold)}
+  .verdict .lines{margin-top:12px;font-size:15px;line-height:1.55}
+  .verdict .lines span{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  th,td{text-align:left;padding:7px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600}
+  td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .small{font-size:12.5px;color:var(--muted);line-height:1.5}
+  input[type=text]{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);
+    background:var(--panel2);color:var(--ink);font-size:16px;margin-top:10px}
+  .targets{font-size:14px;line-height:1.6}
+  .targets b{color:var(--gold)}
+  .flash{animation:fl .5s}
+  @keyframes fl{0%{background:#2e4a33}100%{background:var(--panel)}}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="dot"></span>TrustedCigar — Scan a cigar <span style="color:var(--gold);font-size:14px;vertical-align:3px">BETA</span></h1>
+  <div class="sub">Point the camera at a cigar's box or cello barcode and get the verdict: today's price per stick across retailers that meet <a href="standard.html" style="color:var(--gold)">the Standard</a>. The code is read on your phone; no account, no tracking. Demo verdicts below use reference prices while the full catalog comes online. <a href="index.html" style="color:var(--gold)">&#8592; Home</a></div>
+</header>
+
+<div class="card">
+  <div id="reader"></div>
+  <button id="btnStart">Start camera scan</button>
+  <div class="row">
+    <button id="btnPhoto" class="secondary">Photograph instead</button>
+    <button id="btnTorch" class="secondary" disabled>Torch</button>
+  </div>
+  <input id="photoInput" type="file" accept="image/*" capture="environment" style="display:none">
+  <div class="status" id="status">Camera is off. Tap <b>Start camera scan</b> and allow camera access.</div>
+</div>
+
+<div class="verdict" id="verdict">
+  <div class="name" id="vName"></div>
+  <div class="meta" id="vMeta"></div>
+  <div><span class="pill" id="vPill"></span></div>
+  <div class="lines" id="vLines"></div>
+</div>
+
+<div class="card">
+  <div style="font-weight:700">No barcode handy?</div>
+  <div class="small">Type a UPC from any cigar box or cello sticker:</div>
+  <input type="text" id="manual" inputmode="numeric" autocomplete="off" placeholder="e.g. 071610511231">
+  <button id="btnManual" class="secondary">Look it up</button>
+</div>
+
+<div class="card">
+  <div style="font-weight:700">Demo set — try one</div>
+  <div class="targets" style="margin-top:6px">
+    1. <b>Henry Clay War Hawk Toro</b> — scan the cello sticker<br>
+    2. <b>Dunbarton Umbagog Toro Toro</b> — box or bundle sticker<br>
+    3. <b>Toscano Antico</b> — pack sticker<br>
+    <span class="small">Works in shop light and humidor light alike — dim light is the honest test.</span>
+  </div>
+</div>
+
+<p class="small" style="text-align:center;margin:18px 0 26px">TrustedCigar scanner — beta · demo verdicts use reference prices · the catalog grows weekly · adults 21+</p>
+
+<script>
+(function(){
+  var KNOWN = {
+    "071610511231": {name:"Henry Clay War Hawk Toro", meta:"Altadis · Connecticut · Toro 6 × 50", line:"$9.00 / stick", note:"Reference line from a Cigar Page 5-pack, Oct 2026."},
+    "019962729225": {name:"Dunbarton Umbagog Toro Toro", meta:"Dunbarton Tobacco & Trust · 6 × 52", line:"$9.95 / stick", note:"Reference line from a Neptune bundle of 10, Sep 2026."},
+    "8059145100665": {name:"Toscano Antico", meta:"Toscano · Italian · box of 50 format", line:"$4.50 / stick", note:"Reference line from Neptune, 2026."}
+  };
+  var libLoaded=false, scanner=null, scanning=false, startStamp=0, firstReadPending=false, torchOn=false;
+  var logRows=[];
+  var $=function(id){return document.getElementById(id)};
+  var statusEl=$("status");
+
+  function setStatus(html){ statusEl.innerHTML=html; }
+  function beep(){ try{ var Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx) return;
+    var ctx=new Ctx(), o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.frequency.value=1180; g.gain.value=.12;
+    o.start(); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+.18); o.stop(ctx.currentTime+.2);
+    setTimeout(function(){ctx.close()},300); }catch(e){} }
+
+  function validCheckDigit(code){
+    var s=String(code).replace(/\D/g,"");
+    if(s.length===13){ var sum=0; for(var i=0;i<12;i++){ sum+=parseInt(s[i],10)*((i%2===0)?1:3); }
+      return ((10-(sum%10))%10)===parseInt(s[12],10); }
+    if(s.length===12){ var sum2=0; for(var j=0;j<11;j++){ sum2+=parseInt(s[j],10)*((j%2===0)?3:1); }
+      return ((10-(sum2%10))%10)===parseInt(s[11],10); }
+    return null;
+  }
+
+  function logResult(){ /* site build: no session log UI */ }
+
+  function showVerdict(code, how, ms){
+    var rec=KNOWN[code]; var chk=validCheckDigit(code);
+    var v=$("verdict"); v.style.display="block";
+    if(rec){
+      $("vName").textContent=rec.name;
+      $("vMeta").textContent=rec.meta+" · UPC "+code;
+      var pill=$("vPill"); pill.className="pill known"; pill.textContent="✓ Recognized — demo entry";
+      $("vLines").innerHTML="<span>Reference good-price line:</span> <b>"+rec.line+"</b><br>"+rec.note+
+        "<br><span>Beta note: live prices across Approved retailers land here as the catalog comes online.</span>";
+      logResult(code, ms, how, "Matched — "+rec.name);
+    } else {
+      $("vName").textContent="Code read: "+code;
+      $("vMeta").textContent=(chk===true?"Valid barcode (check digit OK)":(chk===false?"Barcode read, but the check digit fails — likely a glare misread. Try again.":"Barcode read"))+
+        " · not in the beta demo set yet";
+      var pill2=$("vPill"); pill2.className="pill good"; pill2.textContent="✓ The scan itself worked";
+      $("vLines").innerHTML="Your phone read that code cleanly. As the catalog grows, any cigar's code resolves to its price verdict across Approved retailers.";
+      logResult(code, ms, how, chk===false?"Read, check digit failed":"Read, valid code");
+    }
+    beep();
+    v.scrollIntoView({behavior:"smooth", block:"center"});
+  }
+
+  function loadLib(cb){
+    if(libLoaded) return cb();
+    var urls=["https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js",
+              "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"];
+    var i=0;
+    (function next(){
+      if(i>=urls.length){ setStatus("<b>Couldn't load the scanner engine.</b> Check your connection and reload the page."); return; }
+      var s=document.createElement("script"); s.src=urls[i++];
+      s.onload=function(){ libLoaded=true; cb(); };
+      s.onerror=next;
+      document.head.appendChild(s);
+    })();
+  }
+
+  function makeScanner(){
+    scanner=new Html5Qrcode("reader", {formatsToSupport:[
+      Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E,
+      Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.CODE_39,
+      Html5QrcodeSupportedFormats.QR_CODE ], verbose:false});
+  }
+
+  function onDecode(text){
+    if(!firstReadPending) return;
+    firstReadPending=false;
+    var ms=Math.round(performance.now()-startStamp);
+    showVerdict(String(text).replace(/\D/g,"")||text, "Camera", ms);
+    setStatus("Read in <b>"+(ms/1000).toFixed(1)+"s</b>. Keep scanning other sticks, or stop the camera below.");
+  }
+
+  $("btnStart").addEventListener("click", function(){
+    if(scanning){
+      scanner.stop().then(function(){ scanning=false; $("btnStart").textContent="Start camera scan";
+        $("btnTorch").disabled=true; setStatus("Camera stopped."); }).catch(function(){});
+      return;
+    }
+    loadLib(function(){
+      if(!scanner) makeScanner();
+      setStatus("Starting camera… if a permission prompt appears, tap <b>Allow</b>.");
+      startStamp=performance.now(); firstReadPending=true;
+      scanner.start({facingMode:"environment"},
+        {fps:12, qrbox:{width:280,height:170}, aspectRatio:1.3333},
+        onDecode, function(){})
+      .then(function(){ scanning=true; $("btnStart").textContent="Stop camera";
+        $("btnTorch").disabled=false;
+        setStatus("Camera live — first read is being timed. Hold the barcode steady, 4–8 inches away."); })
+      .catch(function(err){ firstReadPending=false;
+        setStatus("<b>Camera wouldn't start.</b> If you denied permission, allow it in Settings › Safari › Camera, then try again. You can also use <b>Photograph instead</b>. ("+String(err).slice(0,120)+")"); });
+    });
+  });
+
+  $("btnTorch").addEventListener("click", function(){
+    if(!scanner || !scanning) return;
+    torchOn=!torchOn;
+    try{
+      scanner.applyVideoConstraints({advanced:[{torch:torchOn}]})
+        .then(function(){ setStatus(torchOn?"Torch on.":"Torch off."); })
+        .catch(function(){ setStatus("This phone/browser doesn't expose a torch to web pages — that's one of the known iPhone web limits. Photo mode with flash is the fallback."); torchOn=false; });
+    }catch(e){ setStatus("Torch isn't available to web pages on this phone — known iPhone web limit. Photo mode is the fallback."); }
+  });
+
+  $("btnPhoto").addEventListener("click", function(){ $("photoInput").click(); });
+  $("photoInput").addEventListener("change", function(ev){
+    var f=ev.target.files && ev.target.files[0]; if(!f) return;
+    loadLib(function(){
+      if(!scanner) makeScanner();
+      var t0=performance.now();
+      setStatus("Reading the photo…");
+      scanner.scanFile(f, false).then(function(text){
+        var ms=Math.round(performance.now()-t0);
+        showVerdict(String(text).replace(/\D/g,"")||text, "Photo", ms);
+        setStatus("Photo read in <b>"+(ms/1000).toFixed(1)+"s</b>.");
+      }).catch(function(){
+        setStatus("<b>No barcode found in that photo.</b> Get closer, fill the frame with the sticker, and avoid glare — then try again. (This counts as a photo-mode miss; it's useful data too.)");
+        logResult("—", null, "Photo", "No barcode found");
+      });
+    });
+    ev.target.value="";
+  });
+
+  $("btnManual").addEventListener("click", function(){
+    var code=$("manual").value.replace(/\D/g,"");
+    if(!code){ setStatus("Type a UPC first."); return; }
+    showVerdict(code, "Typed", null);
+  });
+
+})();
+</script>
+</body>
+</html>
