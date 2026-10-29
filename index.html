@@ -52,6 +52,7 @@
     <p class="lede">Two questions decide every cigar purchase online: is this a fair price per stick — and can this store be trusted with your order? TrustedCigar answers both, from evidence, and never sells the answer.</p>
     <a class="cta" href="trust-index.html">See who meets the standard</a>
     <a class="cta ghost" href="the-charge.html">Beware of hidden costs — the $14.95 charge</a>
+    <p style="margin-top:22px;font-size:16px;">Per-stick prices verified: <strong id="ps-count" style="font-size:22px;">589</strong> — and climbing. Every one checked on the retailer's own page.</p>
   </div>
 </div>
 
@@ -116,5 +117,25 @@
 })();
 </script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1a0436df2f214d81b4258178c56bba9b"}'></script><!-- End Cloudflare Web Analytics -->
+<script>
+(function(){
+  var el = document.getElementById('ps-count');
+  if(!el) return;
+  fetch('stats.json', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(d){
+    var target = parseInt(d.verified_per_stick_prices, 10);
+    if(!target || isNaN(target)) return;
+    var start = parseInt(el.textContent.replace(/[^0-9]/g,''), 10) || 0;
+    if(target <= start){ el.textContent = target.toLocaleString('en-US'); return; }
+    var t0 = null, dur = 1200;
+    function step(ts){
+      if(!t0) t0 = ts;
+      var p = Math.min((ts - t0)/dur, 1);
+      el.textContent = Math.round(start + (target - start) * p).toLocaleString('en-US');
+      if(p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }).catch(function(){});
+})();
+</script>
 </body>
 </html>
