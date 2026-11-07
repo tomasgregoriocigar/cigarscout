@@ -105,7 +105,7 @@ Promise.all([fetch("data-meta.json").then(r=>r.json()),fetch("data-0.json").then
 }).catch(function(e){document.getElementById("searchStatus").textContent="Data failed to load: "+e});
 document.getElementById("btnSearch").addEventListener("click",function(){
  var q=norm(document.getElementById("q").value); var out=document.getElementById("lineResults"); out.innerHTML="";
- document.getElementById("vitolaCard").style.display="none"; document.getElementById("verdict").style.display="none";
+ clearResultCards(null);
  if(!q){out.innerHTML="<div class='small'>Type a brand or line first.</div>";return}
  var lines={},order=[];
  DATA.forEach(function(c){var s=norm(c.brand+" "+(c.line||"")); if(s.indexOf(q)>=0){var k=norm(c.brand)+"||"+norm(c.line); if(!lines[k]){lines[k]={brand:c.brand,line:c.line};order.push(k)}}});
@@ -117,6 +117,18 @@ document.getElementById("btnSearch").addEventListener("click",function(){
    button, and the camera is stopped so it never runs behind a verdict.
    No-match cards deliberately do NOT fold — the controls are still
    needed there. ---- */
+/* ---- One result at a time (owner field note, Nov 7): result cards
+   REPLACE, never stack. A barcode attempt's "not in the catalogue
+   yet" card was still on screen above the "no match" card from the
+   band attempt that followed it. Every render path funnels through
+   showScanCard / showBandCard / showVerdict / pickLine, and each one
+   clears the other result cards first (showVerdict via
+   collapseToVerdict, which has always hidden the other three);
+   starting a new type-in search clears all four. ---- */
+var RESULT_CARDS=["vitolaCard","scanCard","bandCard","verdict"];
+function clearResultCards(keep){
+ RESULT_CARDS.forEach(function(id){if(id===keep)return;var el=document.getElementById(id);if(el)el.style.display="none";});
+}
 function stopCamera(){
  if(!window.scanner||!window.scanning)return;
  try{scanner.stop().then(function(){scanning=false;var b=document.getElementById("btnStart");if(b)b.textContent="Start camera scan";var t=document.getElementById("btnTorch");if(t)t.disabled=true;}).catch(function(){scanning=false;});}catch(e){scanning=false;}
@@ -183,6 +195,7 @@ function linePickerEntries(L){
  return out;
 }
 function pickLine(L){
+ clearResultCards("vitolaCard");
  var entries=linePickerEntries(L);
  var card=document.getElementById("vitolaCard"); card.style.display="block"; var el=document.getElementById("vitolaList"); el.innerHTML="";
  if(!entries.length){el.innerHTML="<div class='small'>No priced cigar is recorded for this line yet.</div>"}
@@ -234,6 +247,7 @@ function upcVariants(code){
 }
 var scanLineRoute=null;
 function showScanCard(name,meta,pillClass,pillText,linesHtml,lineRoute){
+ clearResultCards("scanCard");
  $("sName").textContent=name; $("sMeta").textContent=meta;
  var pill=$("sPill"); pill.className="pill "+pillClass; pill.textContent=pillText;
  $("sLines").innerHTML=linesHtml;
@@ -465,7 +479,7 @@ function matchBand(texts){
  return out.slice(0,2);
 }
 var bandCands=[],bandIdx=0,bandText="";
-function showBandCard(){$("bandCard").style.display="block";$("bandCard").scrollIntoView({behavior:"smooth",block:"center"})}
+function showBandCard(){clearResultCards("bandCard");$("bandCard").style.display="block";$("bandCard").scrollIntoView({behavior:"smooth",block:"center"})}
 function renderBandCandidate(){
  var c=bandCands[bandIdx];if(!c)return;
  collapseEfforts();
