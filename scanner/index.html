@@ -35,7 +35,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 #scanAgainBar button{margin-top:0;box-shadow:0 4px 18px rgba(0,0,0,.5)}
 </style></head><body>
 <header><h1><span class="dot"></span>TrustedCigar Scanner</h1>
-<div class="sub">Check a cigar before you buy it. Point the camera at the box or cello barcode and get the verdict: today's verified price per stick across retailers that meet the Standard (Neptune Cigar, Best Cigar Prices, Cigar Page, Smoke Inn) — read from the retailer's own page, never guessed. No barcode on the stick? Photograph the band — the lettering on it identifies the cigar. Everything is read on your phone; no account, no tracking. Stock status is shown only for paying partner retailers; there are none yet, so no stock status appears. A cigar with no verified price reads “not found.”</div></header>
+<div class="sub">Check a cigar before you buy it. Point the camera at the box or cello barcode and get the verdict: today's verified price per stick across retailers that meet the Standard (Neptune Cigar, Best Cigar Prices, Cigar Page, Smoke Inn) — read from the retailer's own page, never guessed. No barcode on the stick? Photograph the band — the lettering on it identifies the cigar. Barcodes are read on your phone; a band photo is sent to our vision reader for the read and isn't stored. No account, no tracking. Stock status is shown only for paying partner retailers; there are none yet, so no stock status appears. A cigar with no verified price reads “not found.”</div></header>
 
 <div id="scanAgainBar" style="display:none"><button id="btnScanAgain">Scan another cigar</button></div>
 <div id="scanEfforts">
@@ -579,10 +579,63 @@ function finishBand(texts){
  bandIdx=0;
  if(bandCands.length)renderBandCandidate();else renderBandNoMatch();
 }
+var VISION_ENDPOINT="https://trustedcigar-band-vision.tomas-gregorio.workers.dev/identify";
+function visionCandidates(resp){
+ var out=[],seen={};
+ (resp.candidates||[]).forEach(function(vc){
+  if(!vc||!vc.brand)return;
+  var nb=norm(vc.brand),nl=norm(vc.line||""),e=null,i;
+  for(i=0;i<NAME_INDEX.length;i++){if(norm(NAME_INDEX[i].brand)===nb&&norm(NAME_INDEX[i].line)===nl){e=NAME_INDEX[i];break}}
+  if(!e&&nl){for(i=0;i<NAME_INDEX.length;i++){var y=NAME_INDEX[i];if(norm(y.brand)===nb&&(norm(y.line).indexOf(nl)>=0||nl.indexOf(norm(y.line))>=0)){e=y;break}}}
+  if(!e){var bl=NAME_INDEX.filter(function(z){return norm(z.brand)===nb});if(bl.length===1)e=bl[0]}
+  if(!e)return;
+  var k=norm(e.brand)+"||"+norm(e.line);if(seen[k])return;seen[k]=1;
+  out.push({entry:e,matched:e.tokens.slice(0,4),conf:(typeof vc.confidence==="number"&&vc.confidence>=0.5)?"strong":"possible"});
+ });
+ return out.slice(0,3);
+}
+function tryVisionBand(file,done){
+ loadBandImage(file,function(img,url){
+  try{
+   var W=img.naturalWidth,H=img.naturalHeight,sc=Math.min(1,1024/Math.max(W,H));
+   var c=document.createElement("canvas");c.width=Math.max(1,Math.round(W*sc));c.height=Math.max(1,Math.round(H*sc));
+   c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+   URL.revokeObjectURL(url);
+   var dataUrl=c.toDataURL("image/jpeg",0.85);
+   var ctrl=("AbortController" in window)?new AbortController():null;
+   var to=setTimeout(function(){if(ctrl)ctrl.abort()},25000);
+   fetch(VISION_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:dataUrl}),signal:ctrl?ctrl.signal:undefined})
+    .then(function(r){return r.json().then(function(j){return {status:r.status,j:j}})})
+    .then(function(res){
+     clearTimeout(to);
+     if(res.status===200&&res.j&&res.j.candidates&&res.j.candidates.length){
+      var mapped=visionCandidates(res.j);
+      if(mapped.length){
+       bandText=String(res.j.readable_text||"").replace(/\s+/g," ").trim();
+       bandCands=mapped;bandIdx=0;
+       renderBandCandidate();
+       done(true);return;
+      }
+     }
+     done(false);
+    })
+    .catch(function(){clearTimeout(to);done(false)});
+  }catch(e){done(false)}
+ },function(){done(false)});
+}
 function runBandPhoto(file){
  bandCands=[];bandIdx=0;bandText="";
  $("bName").textContent="Reading the band…";
- $("bMeta").textContent="The lettering is read on your phone — the photo itself doesn't leave this device.";
+ $("bMeta").textContent="The photo is sent to our vision reader for the read — we don't store band photos.";
+ $("bPill").style.display="none";
+ $("bLines").innerHTML="The vision read takes a few seconds — it reads the foil and script bands the lettering reader can't.";
+ $("bBtns").style.display="none";
+ showBandCard();
+ tryVisionBand(file,function(handled){if(!handled)runBandOcr(file)});
+}
+function runBandOcr(file){
+ $("bName").textContent="Reading the band…";
+ $("bMeta").textContent="The vision reader couldn't place that one — reading the lettering on your phone instead.";
  $("bPill").style.display="none";
  $("bLines").innerHTML="The first read takes a little longer while the reading engine loads; after that it's quicker.";
  $("bBtns").style.display="none";
