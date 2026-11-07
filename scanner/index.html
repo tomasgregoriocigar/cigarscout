@@ -31,10 +31,14 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 .scanlines{margin-top:12px;font-size:15px;line-height:1.55}
 .scanlines span{color:var(--muted)}
 .bandtext{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.5;word-break:break-word}
+#scanAgainBar{position:sticky;top:8px;z-index:6}
+#scanAgainBar button{margin-top:0;box-shadow:0 4px 18px rgba(0,0,0,.5)}
 </style></head><body>
 <header><h1><span class="dot"></span>TrustedCigar Scanner</h1>
 <div class="sub">Check a cigar before you buy it. Point the camera at the box or cello barcode and get the verdict: today's verified price per stick across retailers that meet the Standard (Neptune Cigar, Best Cigar Prices, Cigar Page, Smoke Inn) — read from the retailer's own page, never guessed. No barcode on the stick? Photograph the band — the lettering on it identifies the cigar. Everything is read on your phone; no account, no tracking. Stock status is shown only for paying partner retailers; there are none yet, so no stock status appears. A cigar with no verified price reads “not found.”</div></header>
 
+<div id="scanAgainBar" style="display:none"><button id="btnScanAgain">Scan another cigar</button></div>
+<div id="scanEfforts">
 <div class="card"><div style="font-weight:700">Step 1 — Scan the barcode</div>
 <div id="reader"></div>
 <button id="btnStart">Start camera scan</button>
@@ -50,25 +54,6 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <div class="status" id="status">Camera is off. Tap <b>Start camera scan</b> and allow camera access.</div>
 </div>
 
-<div class="card verdict" id="scanCard" style="display:none">
-<div class="name" id="sName"></div>
-<div class="meta" id="sMeta"></div>
-<div><span class="pill" id="sPill"></span></div>
-<div class="scanlines" id="sLines"></div>
-<div id="sBtns" style="display:none"><button id="btnScanLine">See every vitola for this line</button></div>
-</div>
-
-<div class="card verdict" id="bandCard" style="display:none">
-<div class="name" id="bName"></div>
-<div class="meta" id="bMeta"></div>
-<div><span class="pill" id="bPill"></span></div>
-<div class="scanlines" id="bLines"></div>
-<div class="row" id="bBtns" style="display:none">
-<button id="btnBandYes">Yes — pick the vitola</button>
-<button id="btnBandNo" class="secondary">Not this one</button>
-</div>
-</div>
-
 <div class="card"><div style="font-weight:700">No barcode handy?</div>
 <div class="small">Type a UPC from any cigar box or cello sticker:</div>
 <input type="text" id="manual" inputmode="numeric" autocomplete="off" placeholder="e.g. 071610511231">
@@ -80,8 +65,26 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <input type="text" id="q" placeholder="e.g. Padron 1964, Oliva Serie V, La Aroma de Cuba">
 <button id="btnSearch">Identify</button><div class="small" id="searchStatus" style="margin-top:8px">Loading catalogue data…</div>
 <div id="lineResults"></div></div>
+</div>
 <div class="card" id="vitolaCard" style="display:none"><div style="font-weight:700">Pick the vitola in your hand</div>
 <div class="small">Every known vitola for this line:</div><div id="vitolaList"></div></div>
+<div class="card verdict" id="scanCard" style="display:none">
+<div class="name" id="sName"></div>
+<div class="meta" id="sMeta"></div>
+<div><span class="pill" id="sPill"></span></div>
+<div class="scanlines" id="sLines"></div>
+<div id="sBtns" style="display:none"><button id="btnScanLine">See every vitola for this line</button></div>
+</div>
+<div class="card verdict" id="bandCard" style="display:none">
+<div class="name" id="bName"></div>
+<div class="meta" id="bMeta"></div>
+<div><span class="pill" id="bPill"></span></div>
+<div class="scanlines" id="bLines"></div>
+<div class="row" id="bBtns" style="display:none">
+<button id="btnBandYes">Yes — pick the vitola</button>
+<button id="btnBandNo" class="secondary">Not this one</button>
+</div>
+</div>
 <div class="card verdict" id="verdict" style="display:none"></div>
 <div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div></div>
 <p class="small" style="text-align:center;margin:18px 0">TrustedCigar · Consumer-first cigar price checks · Scores are never for sale · trustedcigar.com</p>
@@ -109,15 +112,85 @@ document.getElementById("btnSearch").addEventListener("click",function(){
  if(!order.length){out.innerHTML="<div class='small'><b>Not found.</b> No priced line in the catalogue matches that search. Check the spelling on the band and try again.</div>";return}
  order.slice(0,12).forEach(function(k){var L=lines[k];var b=document.createElement("button");b.className="secondary";b.textContent=L.brand+(L.line?" — "+L.line:"");b.addEventListener("click",function(){pickLine(L)});out.appendChild(b)});
 });
+/* ---- Verdict focus (owner field note, Nov 6): when an answer renders,
+   the scan machinery folds away behind a single "Scan another cigar"
+   button, and the camera is stopped so it never runs behind a verdict.
+   No-match cards deliberately do NOT fold — the controls are still
+   needed there. ---- */
+function stopCamera(){
+ if(!window.scanner||!window.scanning)return;
+ try{scanner.stop().then(function(){scanning=false;var b=document.getElementById("btnStart");if(b)b.textContent="Start camera scan";var t=document.getElementById("btnTorch");if(t)t.disabled=true;}).catch(function(){scanning=false;});}catch(e){scanning=false;}
+}
+function collapseEfforts(){
+ stopCamera();
+ var e=document.getElementById("scanEfforts"); if(e)e.style.display="none";
+ var bar=document.getElementById("scanAgainBar"); if(bar)bar.style.display="block";
+}
+function collapseToVerdict(){
+ collapseEfforts();
+ ["vitolaCard","scanCard","bandCard"].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display="none";});
+}
+/* ---- Vitola picker entries, built from the line's priced identities
+   themselves so the picker can never render empty while a priced
+   identity exists for the matched line: the recorded vitola list leads,
+   any priced identity it misses follows, and when the exact line is
+   filed thin (a single identity whose vitola lives inside the line
+   string — the E.P. Carrillo Encore family shape: "Encore Majestic",
+   "Encore Valientes", ... filed as separate lines with no vitola list),
+   the line family's priced identities are offered too, each labelled
+   with its full stored name and going straight to its own verdict.
+   Nothing is guessed: every button is a real catalogue record. ---- */
+function linePickerEntries(L){
+ var nb=norm(L.brand),nl=norm(L.line),key=nb+"||"+nl;
+ var vits=(VIT[key]||[]).slice();
+ var exactRows=DATA.filter(function(c){return norm(c.brand)===nb&&norm(c.line)===nl});
+ var byVit={}; exactRows.forEach(function(c){if(c.vitola)byVit[norm(c.vitola)]=c});
+ var out=[],covered={};
+ vits.forEach(function(v){var rec=byVit[norm(v)]||null;if(rec)covered[norm(v)]=1;out.push({label:v,vitola:v,rec:rec})});
+ function identityLabel(c){
+  var parts=[];
+  if(c.vitola)parts.push(c.vitola);
+  if(c.length_in)parts.push(c.length_in+" in");
+  if(c.ring_gauge)parts.push("× "+c.ring_gauge+" ring");
+  return parts.join(" · ");
+ }
+ exactRows.forEach(function(c){
+  if(c.vitola&&covered[norm(c.vitola)])return;
+  if(c.vitola)covered[norm(c.vitola)]=1;
+  out.push({label:identityLabel(c)||c.line||"This exact cigar",vitola:c.vitola||"",rec:c});
+ });
+ if(nl&&exactRows.length<=1){
+  var words=nl.split(" "),fam=null;
+  for(var k=1;k<=words.length;k++){
+   var pfx=words.slice(0,k).join(" ");
+   var cand=DATA.filter(function(c){if(norm(c.brand)!==nb)return false;var cl=norm(c.line);return cl===pfx||cl.indexOf(pfx+" ")===0});
+   if(cand.length>=2){fam=cand;break}
+  }
+  if(fam){
+   var seenF={};
+   exactRows.forEach(function(c){seenF[norm(c.line)+"|"+norm(c.vitola)]=1});
+   fam.forEach(function(c){
+    var fk=norm(c.line)+"|"+norm(c.vitola);
+    if(seenF[fk])return; seenF[fk]=1;
+    if(norm(c.line)===nl)return;
+    var lbl=c.line,il=identityLabel(c);
+    if(c.vitola)lbl+=" — "+il;
+    else if(il)lbl+=" · "+il;
+    out.push({label:lbl,vitola:c.vitola||"",rec:c});
+   });
+  }
+ }
+ return out;
+}
 function pickLine(L){
- var key=norm(L.brand)+"||"+norm(L.line); var vits=VIT[key]||[];
- var priced={}; DATA.forEach(function(c){if(norm(c.brand)===norm(L.brand)&&norm(c.line)===norm(L.line)&&c.vitola)priced[norm(c.vitola)]=c});
+ var entries=linePickerEntries(L);
  var card=document.getElementById("vitolaCard"); card.style.display="block"; var el=document.getElementById("vitolaList"); el.innerHTML="";
- if(!vits.length)vits=Object.keys(priced);
- vits.forEach(function(v){var b=document.createElement("button");b.className="secondary";b.textContent=v+(priced[norm(v)]?"":" — no verified price");b.addEventListener("click",function(){showVerdict(L,v,priced[norm(v)])});el.appendChild(b)});
+ if(!entries.length){el.innerHTML="<div class='small'>No priced cigar is recorded for this line yet.</div>"}
+ entries.forEach(function(en){var b=document.createElement("button");b.className="secondary";b.textContent=en.label+(en.rec?"":" — no verified price");b.addEventListener("click",function(){showVerdict(L,en.vitola,en.rec)});el.appendChild(b)});
  card.scrollIntoView({behavior:"smooth"});
 }
 function showVerdict(L,vitola,c){
+ collapseToVerdict();
  var v=document.getElementById("verdict"); v.style.display="block";
  if(!c||!c.trust_prices||!c.trust_prices.length){
    v.innerHTML="<div class='name'>"+esc(L.brand)+" "+esc(L.line||"")+" — "+esc(vitola)+"</div><div class='meta'>Verdict</div><p><b>Not found</b> — no verified price for this exact cigar at a trust-cleared retailer. We never guess a verdict.</p>"; v.scrollIntoView({behavior:"smooth"}); return;
@@ -186,7 +259,7 @@ function resolveCode(rawCode,how){
    if(rec){
      document.getElementById("scanCard").style.display="none";
      showVerdict({brand:rec.brand,line:rec.line},rec.vitola,rec);
-     setStatus("<b>Matched.</b> "+esc(entry.name)+" — verdict below. Keep scanning, or stop the camera.");
+     setStatus("<b>Matched.</b> "+esc(entry.name)+" — verdict below.");
      return;
    }
  }
@@ -195,6 +268,7 @@ function resolveCode(rawCode,how){
      "known","✓ In the catalogue",
      "That exact vitola has no verified price at a trust-cleared retailer yet, so there is no verdict to show — we never guess one. The line's other vitolas are one tap away.",
      {brand:entry.db_brand,line:entry.db_line});
+   collapseEfforts();
    setStatus("<b>Matched.</b> "+esc(entry.name)+".");
    return;
  }
@@ -287,9 +361,10 @@ $("btnManual").addEventListener("click",function(){
 });
 
 /* ---- Photograph the band: on-device OCR of the band lettering, matched
-   against the full catalogue's line names (original Oct 27 rules: a cigar is
-   a candidate only on at least two of its name tokens, or a single token that
-   belongs to it alone — anything less is honestly "no match"). ---- */
+   against the full catalogue's line names. The Oct 27 rule stands — a
+   cigar is a candidate only on real name evidence, never a guess — and
+   the Nov 6 v2 matcher below grades that evidence across several OCR
+   passes (exact reads, one-edit fuzzy reads, fragment reads). ---- */
 var BAND_STOP={"THE":1,"DE":1,"Y":1,"OF":1,"LA":1};
 var BAND_GENERIC={"SERIE":1,"TORO":1,"ROBUSTO":1,"GORDO":1,"CHURCHILL":1,"LANCERO":1,
  "PERFECTO":1,"GRAN":1,"RESERVA":1,"MADURO":1,"NATURAL":1,"HABANO":1,"COROJO":1,
@@ -305,38 +380,95 @@ function buildNameIndex(){
   if(seen[k])return;seen[k]=1;
   var toks=[],tseen={};
   bandTokens((c.brand||"")+" "+(c.line||"")).forEach(function(t){if(!tseen[t]&&t.length>=2){tseen[t]=1;toks.push(t)}}); // 1-letter tokens (initials like S.T.K.) are not band evidence — at catalogue scale their joined pairs false-match inside unrelated words
+  if(norm(c.brand)==="e.p. carrillo"&&!tseen["PEREZ"]){tseen["PEREZ"]=1;toks.push("PEREZ")} // Ernesto Pérez Carrillo's bands read "Perez Carrillo" while the catalogue files the brand by his initials — index the surname as band evidence; the confirm card still judges it
   NAME_INDEX.push({brand:c.brand,line:c.line,tokens:toks});
  });
  NAME_INDEX.forEach(function(e){e.tokens.forEach(function(t){freq[t]=(freq[t]||0)+1})});
  NAME_INDEX.forEach(function(e){e.freq=freq});
 }
-function matchBand(text){
- var ocrToks=bandTokens(text),ocrSet={},joined=ocrToks.join("");
- ocrToks.forEach(function(t){ocrSet[t]=1});
+function levDist(a,b){
+ var m=a.length,n=b.length;
+ if(Math.abs(m-n)>1)return 99;
+ var prev=[],cur=[],i,j;
+ for(j=0;j<=n;j++)prev[j]=j;
+ for(i=1;i<=m;i++){cur[0]=i;
+  for(j=1;j<=n;j++){cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a.charAt(i-1)===b.charAt(j-1)?0:1));}
+  var t=prev;prev=cur;cur=t;
+ }
+ return prev[n];
+}
+/* Matching, v2 (Nov 6 OCR fix). Evidence is graded and pooled across
+   every OCR pass: exact token reads; one-edit fuzzy reads of longer
+   tokens ("CARR1LLO" for CARRILLO); fragment reads (a >=5-letter run of
+   a name token, "ARILLO" inside CARRILLO); and the original joined-pair
+   rule for words read as one blob. Acceptance still demands real
+   evidence: two or more exact reads; or one exact read of a token that
+   belongs to a single line alone — and that read must be a standalone
+   word of at least 5 letters, never a substring of joined noise (a
+   lone "EAST" glued between junk words matched a wrong cigar in
+   harness testing before this guard); or an exact read plus a fuzzy
+   or fragment read of another of the line's tokens (an exact read of
+   a generic word never counts toward that backing). Tokens under 4
+   letters are not evidence at all — short words like TAA or SAN are
+   as common in OCR noise as on bands. Fuzzy-only and fragment-only
+   reads never make a candidate: a weak read stays "no match", never
+   a guess. */
+function matchBand(texts){
+ if(typeof texts==="string")texts=[texts];
+ var ocrSet={},joinedList=[],allToks=[];
+ texts.forEach(function(tx){
+  var ts=bandTokens(tx);
+  ts.forEach(function(t){if(!ocrSet[t]){ocrSet[t]=1;allToks.push(t)}});
+  joinedList.push(ts.join(""));
+ });
  var out=[];
  NAME_INDEX.forEach(function(e){
-  var matched=[];
-  e.tokens.forEach(function(t){if(ocrSet[t])matched.push(t)});
+  var exact=[],fuzzy=[],frag=[],standalone={};
+  e.tokens.forEach(function(t){
+   if(t.length<4)return;
+   if(ocrSet[t]){exact.push(t);standalone[t]=1;return}
+   var j;
+   for(j=0;j<joinedList.length;j++){if(joinedList[j].indexOf(t)>=0){exact.push(t);return}}
+   if(t.length>=6){
+    for(var k=0;k<allToks.length;k++){var o=allToks[k];if(o.length>=5&&Math.abs(o.length-t.length)<=1&&levDist(o,t)<=1){fuzzy.push(t);return}}
+   }
+   if(t.length>=6){
+    for(var k2=0;k2<allToks.length;k2++){var o2=allToks[k2];if(o2.length>=5&&(t.indexOf(o2)>=0||o2.indexOf(t)>=0)){frag.push(t);return}}
+   }
+  });
   for(var i=0;i+1<e.tokens.length;i++){
-   if(joined.indexOf(e.tokens[i]+e.tokens[i+1])>=0){
-    if(matched.indexOf(e.tokens[i])<0)matched.push(e.tokens[i]);
-    if(matched.indexOf(e.tokens[i+1])<0)matched.push(e.tokens[i+1]);
+   if(e.tokens[i].length<4||e.tokens[i+1].length<4)continue;
+   var pair=e.tokens[i]+e.tokens[i+1];
+   for(var j2=0;j2<joinedList.length;j2++){
+    if(joinedList[j2].indexOf(pair)>=0){
+     if(exact.indexOf(e.tokens[i])<0)exact.push(e.tokens[i]);
+     if(exact.indexOf(e.tokens[i+1])<0)exact.push(e.tokens[i+1]);
+    }
    }
   }
-  var ratio=e.tokens.length?matched.length/e.tokens.length:0;
-  var distinctive=matched.some(function(t){return e.freq[t]===1&&t.length>=4&&!BAND_GENERIC[t]});
-  if(matched.length>=2||(matched.length===1&&distinctive)){
-   out.push({entry:e,matched:matched,ratio:ratio,
-    conf:(matched.length>=3||ratio>=0.5)?"strong":"possible"});
+  var matched=exact.slice();
+  fuzzy.forEach(function(t){if(matched.indexOf(t)<0)matched.push(t)});
+  var distinctive=exact.some(function(t){return standalone[t]&&e.freq[t]===1&&t.length>=5&&!BAND_GENERIC[t]});
+  var ok=false,conf="possible";
+  if(exact.length>=2){ok=true;conf=(exact.length>=3||(e.tokens.length&&exact.length/e.tokens.length>=0.5))?"strong":"possible"}
+  else if(exact.length===1&&distinctive){ok=true}
+  else if(exact.length>=1&&matched.length>=2&&matched.some(function(t){return !BAND_GENERIC[t]})){ok=true}
+  else if(exact.length===1&&frag.length>=1&&!BAND_GENERIC[exact[0]]){ok=true}
+  if(ok){
+   var shown=matched.slice();
+   frag.forEach(function(t){if(shown.indexOf(t)<0)shown.push(t)});
+   out.push({entry:e,matched:shown,exact:exact,fuzzy:fuzzy,frag:frag,
+    ratio:e.tokens.length?matched.length/e.tokens.length:0,conf:conf});
   }
  });
- out.sort(function(a,b){return (b.matched.length-a.matched.length)||(b.ratio-a.ratio)});
+ out.sort(function(a,b){return (b.matched.length-a.matched.length)||(b.exact.length-a.exact.length)||(b.ratio-a.ratio)});
  return out.slice(0,2);
 }
 var bandCands=[],bandIdx=0,bandText="";
 function showBandCard(){$("bandCard").style.display="block";$("bandCard").scrollIntoView({behavior:"smooth",block:"center"})}
 function renderBandCandidate(){
  var c=bandCands[bandIdx];if(!c)return;
+ collapseEfforts();
  $("bName").textContent="Looks like: "+c.entry.brand+(c.entry.line?" — "+c.entry.line:"");
  $("bMeta").textContent="Matched from your band photo"+(bandIdx>0?" · next closest match":"");
  var pill=$("bPill");pill.style.display="inline-block";
@@ -379,23 +511,59 @@ function loadOcrLib(cb,err){
   document.head.appendChild(s);
  })();
 }
-function prepImage(file,cb){
+/* ---- Band OCR, v2 (Nov 6 fix): the shipped single full-frame read
+   returns foil-and-script bands as noise, so the photo is now read in
+   several passes — full frame and nested centre crops (bands are
+   photographed centre-frame), each pass grayscale with its contrast
+   stretched, alternating the reader's text-layout modes — and the
+   lettering from every pass is pooled before matching. A strong pooled
+   match ends the read early; a weak one still ends at "no match",
+   never a guess. ---- */
+var BAND_PASSES=[
+ {crop:null,w:1600,psm:"6"},
+ {crop:[0.25,0.22,0.75,0.80],w:1800,psm:"6"},
+ {crop:[0.15,0.12,0.85,0.88],w:1800,psm:"11"},
+ {crop:null,w:1600,psm:"11"},
+ {crop:[0.32,0.28,0.68,0.76],w:1800,psm:"11"}
+];
+function loadBandImage(file,cb,err){
  try{
   var url=URL.createObjectURL(file),img=new Image();
-  img.onload=function(){
-   try{
-    var w=img.naturalWidth,h=img.naturalHeight,scale=Math.min(1,1600/Math.max(w,h));
-    if(!(scale<1)){URL.revokeObjectURL(url);cb(file);return}
-    var c=document.createElement("canvas");
-    c.width=Math.round(w*scale);c.height=Math.round(h*scale);
-    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-    URL.revokeObjectURL(url);
-    if(c.toBlob){c.toBlob(function(b){cb(b||file)},"image/jpeg",0.92)}else cb(file);
-   }catch(e){cb(file)}
-  };
-  img.onerror=function(){URL.revokeObjectURL(url);cb(file)};
+  img.onload=function(){cb(img,url)};
+  img.onerror=function(){URL.revokeObjectURL(url);err()};
   img.src=url;
- }catch(e){cb(file)}
+ }catch(e){err()}
+}
+function makePassCanvas(img,def){
+ var W=img.naturalWidth,H=img.naturalHeight;
+ var sx=0,sy=0,sw=W,sh=H;
+ if(def.crop){sx=Math.round(W*def.crop[0]);sy=Math.round(H*def.crop[1]);sw=Math.round(W*(def.crop[2]-def.crop[0]));sh=Math.round(H*(def.crop[3]-def.crop[1]));}
+ var scale=def.w/sw,tw=Math.max(1,Math.round(sw*scale)),th=Math.max(1,Math.round(sh*scale));
+ var c=document.createElement("canvas");c.width=tw;c.height=th;
+ var ctx=c.getContext("2d");
+ ctx.drawImage(img,sx,sy,sw,sh,0,0,tw,th);
+ try{
+  var id=ctx.getImageData(0,0,tw,th),d=id.data,hist=new Array(256),i,v;
+  for(i=0;i<256;i++)hist[i]=0;
+  for(i=0;i<d.length;i+=4){v=Math.round(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]);d[i]=v;hist[v]++}
+  var total=tw*th,lo=0,hi=255,acc=0;
+  for(i=0;i<256;i++){acc+=hist[i];if(acc>=total*0.01){lo=i;break}}
+  acc=0;
+  for(i=255;i>=0;i--){acc+=hist[i];if(acc>=total*0.01){hi=i;break}}
+  if(hi<=lo)hi=lo+1;
+  var span=hi-lo;
+  for(i=0;i<d.length;i+=4){v=Math.round((d[i]-lo)*255/span);if(v<0)v=0;if(v>255)v=255;d[i]=d[i+1]=d[i+2]=v}
+  ctx.putImageData(id,0,0);
+ }catch(e){}
+ return c;
+}
+function finishBand(texts){
+ var best="";
+ texts.forEach(function(tx){if(bandTokens(tx).length>bandTokens(best).length)best=tx});
+ bandText=String(best||"").replace(/\s+/g," ").trim();
+ bandCands=matchBand(texts);
+ bandIdx=0;
+ if(bandCands.length)renderBandCandidate();else renderBandNoMatch();
 }
 function runBandPhoto(file){
  bandCands=[];bandIdx=0;bandText="";
@@ -406,23 +574,37 @@ function runBandPhoto(file){
  $("bBtns").style.display="none";
  showBandCard();
  loadOcrLib(function(){
-  prepImage(file,function(img){
-   try{
-    window.Tesseract.recognize(img,"eng",{logger:function(m){
-     if(m&&m.status==="recognizing text"&&typeof m.progress==="number"){
-      $("bName").textContent="Reading the band… "+Math.round(m.progress*100)+"%";
-     }
-    }}).then(function(res){
-     bandText=String((res&&res.data&&res.data.text)||"").replace(/\s+/g," ").trim();
-     bandCands=matchBand(bandText);
-     bandIdx=0;
-     if(bandCands.length)renderBandCandidate();else renderBandNoMatch();
-    }).catch(function(){
-     renderBandError("<b>The reader hit a snag on that photo.</b> A straighter, closer shot of the band is worth another try.");
-    });
-   }catch(e){
-    renderBandError("<b>The reader couldn't start.</b>");
+  loadBandImage(file,function(img,url){
+   var canvases=BAND_PASSES.map(function(def){return {canvas:makePassCanvas(img,def),psm:def.psm}});
+   URL.revokeObjectURL(url);
+   var texts=[];
+   function fallback(){
+    try{
+     window.Tesseract.recognize(canvases[0].canvas,"eng").then(function(res){
+      texts.push(String((res&&res.data&&res.data.text)||""));finishBand(texts);
+     }).catch(function(){renderBandError("<b>The reader hit a snag on that photo.</b> A straighter, closer shot of the band is worth another try.")});
+    }catch(e){renderBandError("<b>The reader couldn't start.</b>")}
    }
+   if(window.Tesseract.createWorker){
+    window.Tesseract.createWorker("eng").then(function(worker){
+     var i=0;
+     (function next(){
+      if(i>=canvases.length){try{worker.terminate()}catch(e){}finishBand(texts);return}
+      var step=canvases[i];i++;
+      $("bName").textContent="Reading the band… pass "+i+" of "+canvases.length;
+      worker.setParameters({tessedit_pageseg_mode:step.psm}).then(function(){
+       return worker.recognize(step.canvas);
+      }).then(function(res){
+       texts.push(String((res&&res.data&&res.data.text)||""));
+       var cs=matchBand(texts);
+       if(cs.length&&cs[0].conf==="strong"){try{worker.terminate()}catch(e){}finishBand(texts);return}
+       next();
+      }).catch(function(){try{worker.terminate()}catch(e){}if(texts.length)finishBand(texts);else fallback()});
+     })();
+    }).catch(function(){fallback()});
+   }else fallback();
+  },function(){
+   renderBandError("<b>That photo couldn't be opened.</b> Try another shot of the band.");
   });
  },function(){
   renderBandError("<b>Couldn't load the band reader.</b> Check your connection and try again.");
@@ -444,5 +626,13 @@ $("btnBandYes").addEventListener("click",function(){
 $("btnBandNo").addEventListener("click",function(){
  bandIdx++;
  if(bandIdx<bandCands.length)renderBandCandidate();else renderBandNoMatch();
+});
+$("btnScanAgain").addEventListener("click",function(){
+ document.getElementById("scanAgainBar").style.display="none";
+ ["verdict","vitolaCard","scanCard","bandCard"].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display="none";});
+ document.getElementById("lineResults").innerHTML="";
+ var e=document.getElementById("scanEfforts"); if(e)e.style.display="block";
+ setStatus("Catalogue loaded — <b>"+DATA.length.toLocaleString()+" priced cigars</b>. Point the camera at the barcode on the cigar's cellophane or box.");
+ window.scrollTo({top:0,behavior:"smooth"});
 });
 </script></body></html>
