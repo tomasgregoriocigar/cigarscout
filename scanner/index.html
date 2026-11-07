@@ -2,28 +2,85 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#171310">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TrustedCigar">
 <link rel="manifest" href="manifest.json"><title>TrustedCigar Scanner</title>
 <style>
 :root{--bg:#171310;--panel:#221c17;--panel2:#2b241d;--ink:#f3ead9;--muted:#b8a98f;--gold:#d9a441;--green:#57c46a;--red:#e2604d;--line:#3a322a}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:16px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:16px}
 h1{font-size:21px;margin:0}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--green);margin-right:8px}
 .sub{color:var(--muted);font-size:14px;margin-top:5px;line-height:1.45}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:14px}
 button{appearance:none;border:0;border-radius:12px;padding:13px 15px;font-size:15px;font-weight:600;background:var(--gold);color:#1d1607;width:100%;margin-top:9px;cursor:pointer}
 button.secondary{background:var(--panel2);color:var(--ink);border:1px solid var(--line);text-align:left}
+button:disabled{opacity:.45}
+.row{display:flex;gap:10px}.row button{flex:1}
 input[type=text]{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:16px;margin-top:10px}
 table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:7px 4px;border-bottom:1px solid var(--line);vertical-align:top}
 .small{font-size:12.5px;color:var(--muted);line-height:1.5}.warn{color:var(--red);font-weight:700}
 .verdict{border:1px solid var(--gold)} .name{font-size:19px;font-weight:700}.meta{color:var(--muted);font-size:13px;margin-top:3px}
+#reader{width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:180px}
+#reader video{width:100%!important;height:auto!important;display:block}
+.status{font-size:14px;color:var(--muted);margin-top:10px;min-height:20px;line-height:1.45}
+.status b{color:var(--ink)}
+.pill{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700}
+.pill.good{background:#17351d;color:var(--green);border:1px solid var(--green)}
+.pill.known{background:#33270f;color:var(--gold);border:1px solid var(--gold)}
+.scanlines{margin-top:12px;font-size:15px;line-height:1.55}
+.scanlines span{color:var(--muted)}
+.bandtext{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.5;word-break:break-word}
 </style></head><body>
 <header><h1><span class="dot"></span>TrustedCigar Scanner</h1>
-<div class="sub">Check a cigar before you buy it. Prices are verified per-stick prices from trust-cleared retailers only (Neptune Cigar, Best Cigar Prices, Cigar Page, Smoke Inn) — read from the retailer's own page, never guessed. Stock status is shown only for paying partner retailers; there are none yet, so no stock status appears. A cigar with no verified price reads “not found.”</div></header>
-<div class="card"><div style="font-weight:700">Step 1 — Identify the cigar (brand + line)</div>
+<div class="sub">Check a cigar before you buy it. Point the camera at the box or cello barcode and get the verdict: today's verified price per stick across retailers that meet the Standard (Neptune Cigar, Best Cigar Prices, Cigar Page, Smoke Inn) — read from the retailer's own page, never guessed. No barcode on the stick? Photograph the band — the lettering on it identifies the cigar. Everything is read on your phone; no account, no tracking. Stock status is shown only for paying partner retailers; there are none yet, so no stock status appears. A cigar with no verified price reads “not found.”</div></header>
+
+<div class="card"><div style="font-weight:700">Step 1 — Scan the barcode</div>
+<div id="reader"></div>
+<button id="btnStart">Start camera scan</button>
+<div class="row">
+<button id="btnPhoto" class="secondary">Photograph the barcode</button>
+<button id="btnBand" class="secondary">Photograph the band</button>
+</div>
+<div class="row">
+<button id="btnTorch" class="secondary" disabled>Torch</button>
+</div>
+<input id="photoInput" type="file" accept="image/*" capture="environment" style="display:none">
+<input id="bandInput" type="file" accept="image/*" capture="environment" style="display:none">
+<div class="status" id="status">Camera is off. Tap <b>Start camera scan</b> and allow camera access.</div>
+</div>
+
+<div class="card verdict" id="scanCard" style="display:none">
+<div class="name" id="sName"></div>
+<div class="meta" id="sMeta"></div>
+<div><span class="pill" id="sPill"></span></div>
+<div class="scanlines" id="sLines"></div>
+<div id="sBtns" style="display:none"><button id="btnScanLine">See every vitola for this line</button></div>
+</div>
+
+<div class="card verdict" id="bandCard" style="display:none">
+<div class="name" id="bName"></div>
+<div class="meta" id="bMeta"></div>
+<div><span class="pill" id="bPill"></span></div>
+<div class="scanlines" id="bLines"></div>
+<div class="row" id="bBtns" style="display:none">
+<button id="btnBandYes">Yes — pick the vitola</button>
+<button id="btnBandNo" class="secondary">Not this one</button>
+</div>
+</div>
+
+<div class="card"><div style="font-weight:700">No barcode handy?</div>
+<div class="small">Type a UPC from any cigar box or cello sticker:</div>
+<input type="text" id="manual" inputmode="numeric" autocomplete="off" placeholder="e.g. 071610511231">
+<button id="btnManual" class="secondary">Look it up</button>
+</div>
+
+<div class="card"><div style="font-weight:700">Or type the band (brand + line)</div>
 <div class="small">Type the brand or line on the band:</div>
 <input type="text" id="q" placeholder="e.g. Padron 1964, Oliva Serie V, La Aroma de Cuba">
 <button id="btnSearch">Identify</button><div class="small" id="searchStatus" style="margin-top:8px">Loading catalogue data…</div>
 <div id="lineResults"></div></div>
-<div class="card" id="vitolaCard" style="display:none"><div style="font-weight:700">Step 2 — Pick the vitola in your hand</div>
+<div class="card" id="vitolaCard" style="display:none"><div style="font-weight:700">Pick the vitola in your hand</div>
 <div class="small">Every known vitola for this line:</div><div id="vitolaList"></div></div>
 <div class="card verdict" id="verdict" style="display:none"></div>
 <div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div></div>
@@ -31,14 +88,18 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <script>
 var TRUST_STANDING={"Neptune Cigar":"Trust-cleared — Approved","Best Cigar Prices":"Trust-cleared — Approved (BBB A+)","Cigar Page":"Trust-cleared — Approved","Smoke Inn":"Trust-cleared — Approved (BBB A+)"};
 var HIDDEN_COST={}; // No trust-cleared retailer carries a documented hidden checkout charge. Warning renders automatically when a retailer is listed here.
-var DATA=[],VIT={},META=null;
+var DATA=[],VIT={},META=null,UPCODES={},DATA_BY_ID={},NAME_INDEX=[];
 function norm(s){return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim()}
-Promise.all([fetch("data-meta.json").then(r=>r.json()),fetch("data-0.json").then(r=>r.json()),fetch("data-1.json").then(r=>r.json()),fetch("data-2.json").then(r=>r.json())]).then(function(p){
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function idKey(b,l,v){return norm(b)+"|"+norm(l)+"|"+norm(v)}
+Promise.all([fetch("data-meta.json").then(r=>r.json()),fetch("data-0.json").then(r=>r.json()),fetch("data-1.json").then(r=>r.json()),fetch("data-2.json").then(r=>r.json()),fetch("data-upc.json").then(r=>r.json()).catch(function(){return null})]).then(function(p){
  META=p[0]; VIT=META.vitolas_by_line||{}; DATA=p[1].concat(p[2],p[3]);
+ if(p[4]&&p[4].codes)UPCODES=p[4].codes;
+ DATA.forEach(function(c){DATA_BY_ID[idKey(c.brand,c.line,c.vitola)]=c});
+ buildNameIndex();
  document.getElementById("searchStatus").textContent="Catalogue loaded: "+DATA.length+" priced cigar identities. Search to begin.";
  document.getElementById("stats").textContent="Priced identities: "+META.stats.identities_priced+" · Trust-cleared pairs: "+META.stats.trust_paired+" · Single trust price: "+META.stats.trust_single+" · Catalogue cigars total: "+META.stats.catalogue_cigars+" · Generated "+META.generated_at;
 }).catch(function(e){document.getElementById("searchStatus").textContent="Data failed to load: "+e});
-function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
 document.getElementById("btnSearch").addEventListener("click",function(){
  var q=norm(document.getElementById("q").value); var out=document.getElementById("lineResults"); out.innerHTML="";
  document.getElementById("vitolaCard").style.display="none"; document.getElementById("verdict").style.display="none";
@@ -71,4 +132,317 @@ function showVerdict(L,vitola,c){
  "<p class='small'>Stock status is not displayed — it is shown only for paying partner retailers, and there are none yet.</p>";
  v.scrollIntoView({behavior:"smooth"});
 }
+
+/* ================= Scan window — restored from the original Oct 27, 2026
+   production scanner (scan.html @ ef70fe19), now resolving against the full
+   catalogue instead of the original 4-code table. ================= */
+var $=function(id){return document.getElementById(id)};
+var statusEl=$("status");
+function setStatus(html){statusEl.innerHTML=html}
+function beep(){try{var Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
+ var ctx=new Ctx(),o=ctx.createOscillator(),g=ctx.createGain();
+ o.connect(g);g.connect(ctx.destination);o.frequency.value=1180;g.gain.value=.12;
+ o.start();g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.18);o.stop(ctx.currentTime+.2);
+ setTimeout(function(){ctx.close()},300);}catch(e){}}
+function validCheckDigit(code){
+ var s=String(code).replace(/\D/g,"");
+ if(s.length===13){var sum=0;for(var i=0;i<12;i++){sum+=parseInt(s[i],10)*((i%2===0)?1:3);}
+  return ((10-(sum%10))%10)===parseInt(s[12],10);}
+ if(s.length===12){var sum2=0;for(var j=0;j<11;j++){sum2+=parseInt(s[j],10)*((j%2===0)?3:1);}
+  return ((10-(sum2%10))%10)===parseInt(s[11],10);}
+ return null;
+}
+function upcVariants(code){
+ var out=[code];
+ if(code.length===13&&code.charAt(0)==="0")out.push(code.slice(1));
+ if(code.length===12)out.push("0"+code);
+ if(code.length===11)out.push("0"+code);
+ return out;
+}
+var scanLineRoute=null;
+function showScanCard(name,meta,pillClass,pillText,linesHtml,lineRoute){
+ $("sName").textContent=name; $("sMeta").textContent=meta;
+ var pill=$("sPill"); pill.className="pill "+pillClass; pill.textContent=pillText;
+ $("sLines").innerHTML=linesHtml;
+ scanLineRoute=lineRoute||null;
+ $("sBtns").style.display=lineRoute?"block":"none";
+ var card=$("scanCard"); card.style.display="block";
+ card.scrollIntoView({behavior:"smooth",block:"center"});
+}
+$("btnScanLine").addEventListener("click",function(){
+ if(!scanLineRoute)return;
+ $("scanCard").style.display="none";
+ pickLine(scanLineRoute);
+});
+function resolveCode(rawCode,how){
+ var code=String(rawCode||"").replace(/\D/g,"");
+ if(!code){setStatus("No code read. Try again, or type the UPC below.");return}
+ var entry=null,hitCode=null;
+ upcVariants(code).forEach(function(v){if(!entry&&UPCODES[v]){entry=UPCODES[v];hitCode=v}});
+ var chk=validCheckDigit(code);
+ beep();
+ if(entry&&entry.identity){
+   var rec=DATA_BY_ID[idKey(entry.identity[0],entry.identity[1],entry.identity[2])];
+   if(rec){
+     document.getElementById("scanCard").style.display="none";
+     showVerdict({brand:rec.brand,line:rec.line},rec.vitola,rec);
+     setStatus("<b>Matched.</b> "+esc(entry.name)+" — verdict below. Keep scanning, or stop the camera.");
+     return;
+   }
+ }
+ if(entry){
+   showScanCard(entry.name,"UPC "+hitCode+" · in the catalogue",
+     "known","✓ In the catalogue",
+     "That exact vitola has no verified price at a trust-cleared retailer yet, so there is no verdict to show — we never guess one. The line's other vitolas are one tap away.",
+     {brand:entry.db_brand,line:entry.db_line});
+   setStatus("<b>Matched.</b> "+esc(entry.name)+".");
+   return;
+ }
+ showScanCard("Code read: "+code,
+   (chk===true?"Valid barcode (check digit OK)":(chk===false?"Barcode read, but the check digit fails — likely a glare misread. Try again.":"Barcode read"))+" · not in the catalogue yet",
+   "known","Not in the catalogue yet",
+   "That cigar's barcode isn't in the TrustedCigar catalogue yet — the catalogue carries verified barcodes for a growing set of cigars, and most cigars are still reached by name. Type the brand or line on the band in the search below and you'll get the same verdict.",
+   null);
+ setStatus("<b>Code read.</b> It isn't one of the catalogue's verified barcodes yet.");
+}
+var libLoaded=false,scanner=null,scanning=false,startStamp=0,firstReadPending=false,torchOn=false,lastCode="",lastCodeAt=0;
+function loadLib(cb){
+ if(libLoaded)return cb();
+ var urls=["https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js",
+           "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"];
+ var i=0;
+ (function next(){
+  if(i>=urls.length){setStatus("<b>Couldn't load the scanner engine.</b> Check your connection and reload the page.");return}
+  var s=document.createElement("script");s.src=urls[i++];
+  s.onload=function(){libLoaded=true;cb()};
+  s.onerror=next;
+  document.head.appendChild(s);
+ })();
+}
+function makeScanner(){
+ scanner=new Html5Qrcode("reader",{formatsToSupport:[
+  Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,
+  Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,
+  Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,
+  Html5QrcodeSupportedFormats.QR_CODE],verbose:false});
+}
+function onDecode(text){
+ if(!firstReadPending)return;
+ var code=String(text).replace(/\D/g,"")||String(text);
+ var now=Date.now();
+ if(code===lastCode&&now-lastCodeAt<4000)return; // same sticker still in frame — don't refire
+ lastCode=code;lastCodeAt=now;
+ firstReadPending=false;
+ resolveCode(code,"Camera");
+ setTimeout(function(){if(scanning)firstReadPending=true},1200); // re-arm for the next stick
+}
+$("btnStart").addEventListener("click",function(){
+ if(scanning){
+  scanner.stop().then(function(){scanning=false;$("btnStart").textContent="Start camera scan";
+   $("btnTorch").disabled=true;setStatus("Camera stopped.");}).catch(function(){});
+  return;
+ }
+ loadLib(function(){
+  if(!scanner)makeScanner();
+  setStatus("Starting camera… if a permission prompt appears, tap <b>Allow</b>.");
+  startStamp=performance.now();firstReadPending=true;lastCode="";lastCodeAt=0;
+  scanner.start({facingMode:"environment"},
+   {fps:12,qrbox:{width:280,height:170},aspectRatio:1.3333},
+   onDecode,function(){})
+  .then(function(){scanning=true;$("btnStart").textContent="Stop camera";
+   $("btnTorch").disabled=false;
+   setStatus("Camera live. Hold the barcode steady, 4–8 inches away.");})
+  .catch(function(err){firstReadPending=false;
+   setStatus("<b>Camera wouldn't start.</b> If you denied permission, allow it in Settings › Safari › Camera, then try again. You can also use <b>Photograph the barcode</b> or <b>Photograph the band</b>. ("+String(err).slice(0,120)+")");});
+ });
+});
+$("btnTorch").addEventListener("click",function(){
+ if(!scanner||!scanning)return;
+ torchOn=!torchOn;
+ try{
+  scanner.applyVideoConstraints({advanced:[{torch:torchOn}]})
+   .then(function(){setStatus(torchOn?"Torch on.":"Torch off.")})
+   .catch(function(){setStatus("This phone/browser doesn't expose a torch to web pages — that's one of the known iPhone web limits. Photo mode with flash is the fallback.");torchOn=false});
+ }catch(e){setStatus("Torch isn't available to web pages on this phone — known iPhone web limit. Photo mode is the fallback.");}
+});
+$("btnPhoto").addEventListener("click",function(){$("photoInput").click()});
+$("photoInput").addEventListener("change",function(ev){
+ var f=ev.target.files&&ev.target.files[0];if(!f)return;
+ loadLib(function(){
+  if(!scanner)makeScanner();
+  setStatus("Reading the photo…");
+  scanner.scanFile(f,false).then(function(text){
+   resolveCode(text,"Photo");
+   setStatus("<b>Photo read.</b>");
+  }).catch(function(){
+   setStatus("<b>No barcode found in that photo.</b> Get closer, fill the frame with the sticker, and avoid glare, then try again.");
+  });
+ });
+ ev.target.value="";
+});
+$("btnManual").addEventListener("click",function(){
+ var code=$("manual").value.replace(/\D/g,"");
+ if(!code){setStatus("Type a UPC first.");return}
+ resolveCode(code,"Typed");
+});
+
+/* ---- Photograph the band: on-device OCR of the band lettering, matched
+   against the full catalogue's line names (original Oct 27 rules: a cigar is
+   a candidate only on at least two of its name tokens, or a single token that
+   belongs to it alone — anything less is honestly "no match"). ---- */
+var BAND_STOP={"THE":1,"DE":1,"Y":1,"OF":1,"LA":1};
+var BAND_GENERIC={"SERIE":1,"TORO":1,"ROBUSTO":1,"GORDO":1,"CHURCHILL":1,"LANCERO":1,
+ "PERFECTO":1,"GRAN":1,"RESERVA":1,"MADURO":1,"NATURAL":1,"HABANO":1,"COROJO":1,
+ "OSCURO":1,"CONNECTICUT":1,"TABACOS":1,"TABACO":1,"CIGAR":1,"CIGARS":1};
+function bandTokens(s){
+ return String(s||"").toUpperCase().replace(/[^A-Z0-9 ]+/g," ").split(/\s+/)
+  .filter(function(w){return w&&!BAND_STOP[w]});
+}
+function buildNameIndex(){
+ var seen={},freq={};NAME_INDEX=[];
+ DATA.forEach(function(c){
+  var k=norm(c.brand)+"||"+norm(c.line);
+  if(seen[k])return;seen[k]=1;
+  var toks=[],tseen={};
+  bandTokens((c.brand||"")+" "+(c.line||"")).forEach(function(t){if(!tseen[t]&&t.length>=2){tseen[t]=1;toks.push(t)}}); // 1-letter tokens (initials like S.T.K.) are not band evidence — at catalogue scale their joined pairs false-match inside unrelated words
+  NAME_INDEX.push({brand:c.brand,line:c.line,tokens:toks});
+ });
+ NAME_INDEX.forEach(function(e){e.tokens.forEach(function(t){freq[t]=(freq[t]||0)+1})});
+ NAME_INDEX.forEach(function(e){e.freq=freq});
+}
+function matchBand(text){
+ var ocrToks=bandTokens(text),ocrSet={},joined=ocrToks.join("");
+ ocrToks.forEach(function(t){ocrSet[t]=1});
+ var out=[];
+ NAME_INDEX.forEach(function(e){
+  var matched=[];
+  e.tokens.forEach(function(t){if(ocrSet[t])matched.push(t)});
+  for(var i=0;i+1<e.tokens.length;i++){
+   if(joined.indexOf(e.tokens[i]+e.tokens[i+1])>=0){
+    if(matched.indexOf(e.tokens[i])<0)matched.push(e.tokens[i]);
+    if(matched.indexOf(e.tokens[i+1])<0)matched.push(e.tokens[i+1]);
+   }
+  }
+  var ratio=e.tokens.length?matched.length/e.tokens.length:0;
+  var distinctive=matched.some(function(t){return e.freq[t]===1&&t.length>=4&&!BAND_GENERIC[t]});
+  if(matched.length>=2||(matched.length===1&&distinctive)){
+   out.push({entry:e,matched:matched,ratio:ratio,
+    conf:(matched.length>=3||ratio>=0.5)?"strong":"possible"});
+  }
+ });
+ out.sort(function(a,b){return (b.matched.length-a.matched.length)||(b.ratio-a.ratio)});
+ return out.slice(0,2);
+}
+var bandCands=[],bandIdx=0,bandText="";
+function showBandCard(){$("bandCard").style.display="block";$("bandCard").scrollIntoView({behavior:"smooth",block:"center"})}
+function renderBandCandidate(){
+ var c=bandCands[bandIdx];if(!c)return;
+ $("bName").textContent="Looks like: "+c.entry.brand+(c.entry.line?" — "+c.entry.line:"");
+ $("bMeta").textContent="Matched from your band photo"+(bandIdx>0?" · next closest match":"");
+ var pill=$("bPill");pill.style.display="inline-block";
+ pill.className="pill "+(c.conf==="strong"?"good":"known");
+ pill.textContent=(c.conf==="strong"?"Strong match":"Possible match")+" · band read: "+c.matched.join(" ");
+ $("bLines").innerHTML="Is that the cigar in your hand? If it is, pick its vitola and we'll show the price verdict."+
+  (bandText?"<div class='bandtext'>Lettering we read: &ldquo;"+esc(bandText.slice(0,140))+"&rdquo;</div>":"");
+ $("bBtns").style.display="flex";
+ showBandCard();
+}
+function renderBandNoMatch(){
+ $("bName").textContent="No match yet";
+ $("bMeta").textContent="That band isn't matched to the catalogue yet.";
+ $("bPill").style.display="none";
+ $("bLines").innerHTML=(bandText
+  ?"Here is the lettering the band gave us:<div class='bandtext'>&ldquo;"+esc(bandText.slice(0,180))+"&rdquo;</div>"
+  :"We couldn't read any lettering on that photo. A straight-on shot that fills the frame with the band, out of direct glare, reads best.")+
+  "<div style='margin-top:8px'>You can still type the brand or line in the search on this page — the verdict is the same.</div>";
+ $("bBtns").style.display="none";
+ showBandCard();
+}
+function renderBandError(html){
+ $("bName").textContent="The band reader didn't run";
+ $("bMeta").textContent="";
+ $("bPill").style.display="none";
+ $("bLines").innerHTML=html+" You can still scan the barcode, type the UPC, or type the band in the search on this page.";
+ $("bBtns").style.display="none";
+ showBandCard();
+}
+function loadOcrLib(cb,err){
+ if(window.Tesseract)return cb();
+ var urls=["https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js",
+           "https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"];
+ var i=0;
+ (function next(){
+  if(i>=urls.length){err();return}
+  var s=document.createElement("script");s.src=urls[i++];
+  s.onload=function(){if(window.Tesseract)cb();else next()};
+  s.onerror=next;
+  document.head.appendChild(s);
+ })();
+}
+function prepImage(file,cb){
+ try{
+  var url=URL.createObjectURL(file),img=new Image();
+  img.onload=function(){
+   try{
+    var w=img.naturalWidth,h=img.naturalHeight,scale=Math.min(1,1600/Math.max(w,h));
+    if(!(scale<1)){URL.revokeObjectURL(url);cb(file);return}
+    var c=document.createElement("canvas");
+    c.width=Math.round(w*scale);c.height=Math.round(h*scale);
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    URL.revokeObjectURL(url);
+    if(c.toBlob){c.toBlob(function(b){cb(b||file)},"image/jpeg",0.92)}else cb(file);
+   }catch(e){cb(file)}
+  };
+  img.onerror=function(){URL.revokeObjectURL(url);cb(file)};
+  img.src=url;
+ }catch(e){cb(file)}
+}
+function runBandPhoto(file){
+ bandCands=[];bandIdx=0;bandText="";
+ $("bName").textContent="Reading the band…";
+ $("bMeta").textContent="The lettering is read on your phone — the photo itself doesn't leave this device.";
+ $("bPill").style.display="none";
+ $("bLines").innerHTML="The first read takes a little longer while the reading engine loads; after that it's quicker.";
+ $("bBtns").style.display="none";
+ showBandCard();
+ loadOcrLib(function(){
+  prepImage(file,function(img){
+   try{
+    window.Tesseract.recognize(img,"eng",{logger:function(m){
+     if(m&&m.status==="recognizing text"&&typeof m.progress==="number"){
+      $("bName").textContent="Reading the band… "+Math.round(m.progress*100)+"%";
+     }
+    }}).then(function(res){
+     bandText=String((res&&res.data&&res.data.text)||"").replace(/\s+/g," ").trim();
+     bandCands=matchBand(bandText);
+     bandIdx=0;
+     if(bandCands.length)renderBandCandidate();else renderBandNoMatch();
+    }).catch(function(){
+     renderBandError("<b>The reader hit a snag on that photo.</b> A straighter, closer shot of the band is worth another try.");
+    });
+   }catch(e){
+    renderBandError("<b>The reader couldn't start.</b>");
+   }
+  });
+ },function(){
+  renderBandError("<b>Couldn't load the band reader.</b> Check your connection and try again.");
+ });
+}
+$("btnBand").addEventListener("click",function(){$("bandInput").click()});
+$("bandInput").addEventListener("change",function(ev){
+ var f=ev.target.files&&ev.target.files[0];
+ ev.target.value="";
+ if(!f)return;
+ runBandPhoto(f);
+});
+$("btnBandYes").addEventListener("click",function(){
+ var c=bandCands[bandIdx];if(!c)return;
+ $("bandCard").style.display="none";
+ pickLine({brand:c.entry.brand,line:c.entry.line});
+ setStatus("<b>Matched from the band.</b> Pick the vitola in your hand for the verdict.");
+});
+$("btnBandNo").addEventListener("click",function(){
+ bandIdx++;
+ if(bandIdx<bandCands.length)renderBandCandidate();else renderBandNoMatch();
+});
 </script></body></html>

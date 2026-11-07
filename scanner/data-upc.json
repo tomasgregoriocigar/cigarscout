@@ -1,0 +1,205 @@
+{
+ "generated_at": "2026-11-07T01:19:31+00:00",
+ "source": "cigars.upc in cigar_database.db (17 codes), each hand-verified Nov 6, 2026 against the Nov 6 production scanner data build; identity = the exact brand/line/vitola strings used in data-*.json, or null when that exact vitola has no priced record (page routes to the line's vitola picker).",
+ "codes": {
+  "876742004176": {
+   "name": "Drew Estate Undercrown Shade Gran Toro",
+   "db_brand": "Drew Estate",
+   "db_line": "Undercrown Shade",
+   "db_vitola": "Gran Toro",
+   "identity": [
+    "Drew Estate",
+    "Undercrown Connecticut Shade",
+    "Gran Toro"
+   ],
+   "trust_prices": 2
+  },
+  "019962729225": {
+   "name": "Dunbarton Umbagog Toro Toro",
+   "db_brand": "Dunbarton Tobacco & Trust",
+   "db_line": "Umbagog",
+   "db_vitola": "Toro Toro",
+   "identity": null
+  },
+  "876742009188": {
+   "name": "Drew Estate Liga Privada No. 9 Toro",
+   "db_brand": "Drew Estate",
+   "db_line": "Liga Privada No. 9",
+   "db_vitola": "Toro",
+   "identity": [
+    "Drew Estate",
+    "Liga Privada No 9",
+    "Toro"
+   ],
+   "trust_prices": 1
+  },
+  "814539010511": {
+   "name": "Oliva Serie V Double Toro",
+   "db_brand": "Oliva",
+   "db_line": "Serie V",
+   "db_vitola": "Double Toro 6x60",
+   "identity": [
+    "Oliva",
+    "Serie V",
+    "Double Toro"
+   ],
+   "trust_prices": 2
+  },
+  "071610511231": {
+   "name": "Henry Clay War Hawk Toro",
+   "db_brand": "Henry Clay",
+   "db_line": "War Hawk",
+   "db_vitola": "Toro",
+   "identity": [
+    "Henry Clay",
+    "War Hawk",
+    "Toro"
+   ],
+   "trust_prices": 1
+  },
+  "682621319084": {
+   "name": "Joya de Nicaragua Antaño CT Corona Gorda",
+   "db_brand": "Joya de Nicaragua",
+   "db_line": "Antaño CT",
+   "db_vitola": "Corona Gorda",
+   "identity": [
+    "Joya de Nicaragua",
+    "Antaño CT",
+    "Corona Gorda"
+   ],
+   "trust_prices": 1
+  },
+  "682621319091": {
+   "name": "Joya de Nicaragua Antaño CT Toro",
+   "db_brand": "Joya de Nicaragua",
+   "db_line": "Antaño CT",
+   "db_vitola": "Toro",
+   "identity": [
+    "Joya de Nicaragua",
+    "Antaño CT",
+    "Toro"
+   ],
+   "trust_prices": 1
+  },
+  "815337018457": {
+   "name": "Alec Bradley Double Broadleaf Toro",
+   "db_brand": "Alec Bradley",
+   "db_line": "Double Broadleaf",
+   "db_vitola": "Toro",
+   "identity": [
+    "Alec Bradley",
+    "Double Broadleaf",
+    "Toro"
+   ],
+   "trust_prices": 2
+  },
+  "819577014866": {
+   "name": "La Aroma de Cuba Connecticut Monarch",
+   "db_brand": "La Aroma de Cuba",
+   "db_line": "Connecticut",
+   "db_vitola": "Monarch",
+   "identity": [
+    "La Aroma de Cuba",
+    "Connecticut",
+    "Monarch"
+   ],
+   "trust_prices": 2
+  },
+  "819577010486": {
+   "name": "La Aroma de Cuba Monarch",
+   "db_brand": "La Aroma de Cuba",
+   "db_line": "Classic",
+   "db_vitola": "Monarch",
+   "identity": [
+    "La Aroma de Cuba",
+    null,
+    "Monarch"
+   ],
+   "trust_prices": 2
+  },
+  "682621033928": {
+   "name": "Joya de Nicaragua Antaño 1970 Belicoso",
+   "db_brand": "Joya de Nicaragua",
+   "db_line": "Antaño 1970",
+   "db_vitola": "Belicoso",
+   "identity": [
+    "Joya de Nicaragua",
+    "Antaño 1970",
+    "Belicoso"
+   ],
+   "trust_prices": 2
+  },
+  "817673010201": {
+   "name": "Don Pepin Garcia Tabacos Baez Serie SF Robusto",
+   "db_brand": "Don Pepin Garcia",
+   "db_line": "Tabacos Baez Serie SF",
+   "db_vitola": "Robusto",
+   "identity": [
+    "Don Pepin Garcia",
+    "Tobacos Baez",
+    null
+   ],
+   "trust_prices": 1
+  },
+  "876742009706": {
+   "name": "Drew Estate Kentucky Fire Cured Just a Friend",
+   "db_brand": "Drew Estate",
+   "db_line": "Kentucky Fire Cured",
+   "db_vitola": "Just a Friend",
+   "identity": [
+    "Drew Estate",
+    "Kentucky Fire Cured Just A Friend",
+    null
+   ],
+   "trust_prices": 1
+  },
+  "689674124689": {
+   "name": "El Rey del Mundo Robusto Larga",
+   "db_brand": "El Rey del Mundo",
+   "db_line": null,
+   "db_vitola": "Robusto Larga",
+   "identity": [
+    "El Rey del Mundo",
+    null,
+    "Robusto Larga"
+   ],
+   "trust_prices": 1
+  },
+  "8059145100665": {
+   "name": "Toscano Antico",
+   "db_brand": "Toscano",
+   "db_line": "Antico",
+   "db_vitola": "6 x 38",
+   "identity": [
+    "Toscano",
+    "Antico",
+    null
+   ],
+   "trust_prices": 1
+  },
+  "817673010539": {
+   "name": "My Father No. 2 Belicoso",
+   "db_brand": "My Father",
+   "db_line": "My Father",
+   "db_vitola": "No. 2 Belicoso",
+   "identity": [
+    "My Father",
+    "No 2",
+    "Belicoso"
+   ],
+   "trust_prices": 1
+  },
+  "689674138549": {
+   "name": "El Rey del Mundo Natural Robusto en Vidrio",
+   "db_brand": "El Rey del Mundo",
+   "db_line": "Natural",
+   "db_vitola": "Robusto en Vidrio",
+   "identity": [
+    "El Rey del Mundo",
+    null,
+    "Natural Robusto En Vidrio"
+   ],
+   "trust_prices": 1
+  }
+ }
+}
