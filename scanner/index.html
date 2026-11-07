@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#171310">
+<link rel="manifest" href="manifest.json"><title>TrustedCigar Scanner</title>
+<style>
+:root{--bg:#171310;--panel:#221c17;--panel2:#2b241d;--ink:#f3ead9;--muted:#b8a98f;--gold:#d9a441;--green:#57c46a;--red:#e2604d;--line:#3a322a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:16px}
+h1{font-size:21px;margin:0}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--green);margin-right:8px}
+.sub{color:var(--muted);font-size:14px;margin-top:5px;line-height:1.45}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:14px}
+button{appearance:none;border:0;border-radius:12px;padding:13px 15px;font-size:15px;font-weight:600;background:var(--gold);color:#1d1607;width:100%;margin-top:9px;cursor:pointer}
+button.secondary{background:var(--panel2);color:var(--ink);border:1px solid var(--line);text-align:left}
+input[type=text]{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:16px;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:7px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.small{font-size:12.5px;color:var(--muted);line-height:1.5}.warn{color:var(--red);font-weight:700}
+.verdict{border:1px solid var(--gold)} .name{font-size:19px;font-weight:700}.meta{color:var(--muted);font-size:13px;margin-top:3px}
+</style></head><body>
+<header><h1><span class="dot"></span>TrustedCigar Scanner</h1>
+<div class="sub">Check a cigar before you buy it. Prices are verified per-stick prices from trust-cleared retailers only (Neptune Cigar, Best Cigar Prices, Cigar Page, Smoke Inn) — read from the retailer's own page, never guessed. Stock status is shown only for paying partner retailers; there are none yet, so no stock status appears. A cigar with no verified price reads “not found.”</div></header>
+<div class="card"><div style="font-weight:700">Step 1 — Identify the cigar (brand + line)</div>
+<div class="small">Type the brand or line on the band:</div>
+<input type="text" id="q" placeholder="e.g. Padron 1964, Oliva Serie V, La Aroma de Cuba">
+<button id="btnSearch">Identify</button><div class="small" id="searchStatus" style="margin-top:8px">Loading catalogue data…</div>
+<div id="lineResults"></div></div>
+<div class="card" id="vitolaCard" style="display:none"><div style="font-weight:700">Step 2 — Pick the vitola in your hand</div>
+<div class="small">Every known vitola for this line:</div><div id="vitolaList"></div></div>
+<div class="card verdict" id="verdict" style="display:none"></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div></div>
+<p class="small" style="text-align:center;margin:18px 0">TrustedCigar · Consumer-first cigar price checks · Scores are never for sale · trustedcigar.com</p>
+<script>
+var TRUST_STANDING={"Neptune Cigar":"Trust-cleared — Approved","Best Cigar Prices":"Trust-cleared — Approved (BBB A+)","Cigar Page":"Trust-cleared — Approved","Smoke Inn":"Trust-cleared — Approved (BBB A+)"};
+var HIDDEN_COST={}; // No trust-cleared retailer carries a documented hidden checkout charge. Warning renders automatically when a retailer is listed here.
+var DATA=[],VIT={},META=null;
+function norm(s){return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim()}
+Promise.all([fetch("data-meta.json").then(r=>r.json()),fetch("data-0.json").then(r=>r.json()),fetch("data-1.json").then(r=>r.json()),fetch("data-2.json").then(r=>r.json())]).then(function(p){
+ META=p[0]; VIT=META.vitolas_by_line||{}; DATA=p[1].concat(p[2],p[3]);
+ document.getElementById("searchStatus").textContent="Catalogue loaded: "+DATA.length+" priced cigar identities. Search to begin.";
+ document.getElementById("stats").textContent="Priced identities: "+META.stats.identities_priced+" · Trust-cleared pairs: "+META.stats.trust_paired+" · Single trust price: "+META.stats.trust_single+" · Catalogue cigars total: "+META.stats.catalogue_cigars+" · Generated "+META.generated_at;
+}).catch(function(e){document.getElementById("searchStatus").textContent="Data failed to load: "+e});
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+document.getElementById("btnSearch").addEventListener("click",function(){
+ var q=norm(document.getElementById("q").value); var out=document.getElementById("lineResults"); out.innerHTML="";
+ document.getElementById("vitolaCard").style.display="none"; document.getElementById("verdict").style.display="none";
+ if(!q){out.innerHTML="<div class='small'>Type a brand or line first.</div>";return}
+ var lines={},order=[];
+ DATA.forEach(function(c){var s=norm(c.brand+" "+(c.line||"")); if(s.indexOf(q)>=0){var k=norm(c.brand)+"||"+norm(c.line); if(!lines[k]){lines[k]={brand:c.brand,line:c.line};order.push(k)}}});
+ if(!order.length){out.innerHTML="<div class='small'><b>Not found.</b> No priced line in the catalogue matches that search. Check the spelling on the band and try again.</div>";return}
+ order.slice(0,12).forEach(function(k){var L=lines[k];var b=document.createElement("button");b.className="secondary";b.textContent=L.brand+(L.line?" — "+L.line:"");b.addEventListener("click",function(){pickLine(L)});out.appendChild(b)});
+});
+function pickLine(L){
+ var key=norm(L.brand)+"||"+norm(L.line); var vits=VIT[key]||[];
+ var priced={}; DATA.forEach(function(c){if(norm(c.brand)===norm(L.brand)&&norm(c.line)===norm(L.line)&&c.vitola)priced[norm(c.vitola)]=c});
+ var card=document.getElementById("vitolaCard"); card.style.display="block"; var el=document.getElementById("vitolaList"); el.innerHTML="";
+ if(!vits.length)vits=Object.keys(priced);
+ vits.forEach(function(v){var b=document.createElement("button");b.className="secondary";b.textContent=v+(priced[norm(v)]?"":" — no verified price");b.addEventListener("click",function(){showVerdict(L,v,priced[norm(v)])});el.appendChild(b)});
+ card.scrollIntoView({behavior:"smooth"});
+}
+function showVerdict(L,vitola,c){
+ var v=document.getElementById("verdict"); v.style.display="block";
+ if(!c||!c.trust_prices||!c.trust_prices.length){
+   v.innerHTML="<div class='name'>"+esc(L.brand)+" "+esc(L.line||"")+" — "+esc(vitola)+"</div><div class='meta'>Verdict</div><p><b>Not found</b> — no verified price for this exact cigar at a trust-cleared retailer. We never guess a verdict.</p>"; v.scrollIntoView({behavior:"smooth"}); return;
+ }
+ var prices=c.trust_prices; var lo=prices[0].per_stick, hi=prices[prices.length-1].per_stick;
+ var rows=prices.map(function(p){return "<tr><td>"+esc(p.vendor)+"<br><span class='small'>"+esc(TRUST_STANDING[p.vendor]||"Trust-cleared")+"</span>"+(HIDDEN_COST[p.vendor]?"<br><span class='warn'>⚠ Hidden-cost warning: "+esc(HIDDEN_COST[p.vendor])+"</span>":"")+"</td><td>$"+p.per_stick.toFixed(2)+" / stick</td><td class='small'>Verified "+esc((p.checked_at||"").slice(0,10))+"</td></tr>"}).join("");
+ v.innerHTML="<div class='name'>"+esc(c.brand)+" "+esc(c.line||"")+" — "+esc(c.vitola||vitola)+"</div>"+
+ "<div class='meta'>"+[c.length_in?c.length_in+" in":"",c.ring_gauge?"× "+c.ring_gauge+" ring":"",c.strength||"",c.origin||"",c.wrapper?c.wrapper+" wrapper":""].filter(Boolean).join(" · ")+(c.rating?" · Rating "+c.rating+(c.rating_source?" ("+esc(c.rating_source)+")":""):"")+"</div>"+
+ "<p><b>Verified range: $"+lo.toFixed(2)+" – $"+hi.toFixed(2)+" per stick</b> across "+prices.length+" trust-cleared retailer"+(prices.length>1?"s":"")+". Best verified: $"+lo.toFixed(2)+".</p>"+
+ (c.msrp?"<p class='small'>MSRP: $"+Number(c.msrp).toFixed(2)+" per stick</p>":"<p class='small'>MSRP: not recorded for this cigar</p>")+
+ "<table><tr><th>Retailer</th><th>Per-stick</th><th>Freshness</th></tr>"+rows+"</table>"+
+ "<p class='small'>Stock status is not displayed — it is shown only for paying partner retailers, and there are none yet.</p>";
+ v.scrollIntoView({behavior:"smooth"});
+}
+</script></body></html>
