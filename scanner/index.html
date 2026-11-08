@@ -39,9 +39,24 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 #scanAgainBar button{margin-top:0;box-shadow:0 4px 18px rgba(0,0,0,.5)}
 </style></head><body>
 <header><h1><span class="dot"></span>TrustedCigar Scanner</h1>
-<div class="sub">Check a cigar before you buy it. Start with the band: photograph it and get the verdict — today's verified price per stick across retailers that meet the Standard (Neptune Cigar, Best Cigar Prices, Cigar Page, Smoke Inn) — read from the retailer's own page, never guessed. The band reaches far more cigars than the barcode does; most sticks carry no barcode we hold. Two bands on the stick? Photograph each one — every band adds evidence. Barcodes are read on your phone; a band photo is sent to our vision reader for the read and isn't stored. No account, no tracking. Stock status is shown only for paying partner retailers; there are none yet, so no stock status appears. A cigar with no verified price reads “not found.”</div></header>
+<div class="sub">Check a cigar before you buy it. Start with the band: photograph it and get the verdict — today's verified price per stick across retailers that meet the Standard (Neptune Cigar, Best Cigar Prices, Cigar Page, Smoke Inn) — read from the retailer's own page, never guessed. The band reaches far more cigars than the barcode does; most sticks carry no barcode we hold. Two bands on the stick? Photograph each one — every band adds evidence. Barcodes are read on your phone; a band photo is sent to our vision reader for the read and is never kept by us — a small copy stays on your phone only, for your own scan history. No account, no tracking. Stock status is shown only for paying partner retailers; there are none yet, so no stock status appears. A cigar with no verified price reads “not found.”</div></header>
 
 <div id="scanAgainBar" style="display:none"><button id="btnScanAgain">Scan another cigar</button></div>
+<div class="card" id="histCard">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div style="font-weight:700">History — your last scans</div>
+<button id="btnHist" class="secondary" style="width:auto;margin:0;padding:8px 16px">Show</button>
+</div>
+<div id="histBody" style="display:none">
+<div id="histList"></div>
+<div style="margin-top:10px;border-top:1px solid #e5d9c3;padding-top:10px">
+<div class="small"><b>Members keep every scan — unlimited history.</b> Free history holds your last 5 scans on this phone, each with the prices it saw, date-stamped. Membership stores them all, and V2 adds price-change alerts on the cigars in your history and your humidor. Join the list and we will email you when membership opens.</div>
+<input id="histEmail" type="email" placeholder="you@email.com" autocomplete="email" style="width:100%;padding:12px;border-radius:10px;border:1px solid #d8c9a8;font-size:16px;margin-top:8px">
+<button id="btnHistSave" style="margin-top:8px">Save my history — join the list</button>
+<div class="small" id="histSaveMsg" style="margin-top:6px"></div>
+</div>
+</div>
+</div>
 <div id="scanEfforts">
 <div class="card hero"><div style="font-weight:700">Step 1 — Scan or upload the band</div>
 <div class="small">The band names the cigar, and it reaches far more of the catalogue than a barcode — most sticks have no barcode we hold. On a phone, photograph it; on a computer, upload a picture of it — same read either way. Straight-on, fill the frame, mind the glare. <b>Two bands on the stick? Photograph each one</b> — after the first read you'll get the chance to add the other, and the reads combine.</div>
@@ -116,7 +131,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-08.4</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-08.5</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -258,6 +273,7 @@ function showVerdict(L,vitola,c){
  "<table><tr><th>Retailer</th><th>Per-stick</th><th>Freshness</th></tr>"+rows+"</table>"+
  "<p class='small'>Stock status is not displayed — it is shown only for paying partner retailers, and there are none yet.</p>";
  v.scrollIntoView({behavior:"smooth"});
+ tcRecordHistory(c,vitola);
 }
 
 /* ================= Scan window — restored from the original Oct 27, 2026
@@ -746,9 +762,10 @@ function tryVisionBand(file,done){
  },function(){done(false)});
 }
 function runBandPhoto(file){
+ try{var tu=URL.createObjectURL(file);var tim=new Image();tim.onload=function(){try{var cv=document.createElement("canvas");var sc=320/Math.max(tim.width,tim.height);cv.width=Math.round(tim.width*sc);cv.height=Math.round(tim.height*sc);cv.getContext("2d").drawImage(tim,0,0,cv.width,cv.height);window.__tcBandThumb=cv.toDataURL("image/jpeg",0.6)}catch(e){} try{URL.revokeObjectURL(tu)}catch(e){}};tim.src=tu}catch(e){}
  if(!bandMoreMode){bandCands=[];bandIdx=0;bandText="";bandPool=null;bandOcrTexts=[]}
  $("bName").textContent=bandMoreMode?"Reading the other band…":"Reading the band…";
- $("bMeta").textContent=bandMoreMode?"This read combines with the first band's.":"The photo is sent to our vision reader for the read — we don't store band photos.";
+ $("bMeta").textContent=bandMoreMode?"This read combines with the first band's.":"The photo is sent to our vision reader for the read — we never keep band photos; a small copy stays on your phone only, for your history.";
  $("bPill").style.display="none";
  $("bLines").innerHTML="The vision read takes a few seconds — it reads the foil and script bands the lettering reader can't.";
  $("bBtns").style.display="none";
@@ -942,6 +959,72 @@ $("btnScanAgain").addEventListener("click",function(){
    if(!window.tcSendAppLink(inp?inp.value:"")&&msg) msg.textContent="That email doesn't look right. Check it and try again.";
  });
  tcRenderAppCard();
+})();
+</script>
+<script>
+/* Scan history — Phase 1 (Tomás, Nov 8, 2026): free = last 5 scans, stored
+   ONLY on this phone (localStorage). Each entry freezes the prices the
+   verdict showed, date-stamped. Members get unlimited, server-kept history
+   when membership opens; V2 adds price-change alerts into history + humidor. */
+var TC_HIST_KEY="tc_history_v1";
+function tcHistLoad(){try{return JSON.parse(localStorage.getItem(TC_HIST_KEY)||"[]")}catch(e){return[]}}
+function tcHistStore(list){try{localStorage.setItem(TC_HIST_KEY,JSON.stringify(list))}catch(e){try{localStorage.setItem(TC_HIST_KEY,JSON.stringify(list.map(function(x){var y={};for(var k in x)y[k]=x[k];y.thumb=null;return y})))}catch(e2){}}}
+function tcFmtDate(ts){try{return new Date(ts).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"})}catch(e){return""}}
+function tcRecordHistory(c,vitola){
+ if(!c||!c.trust_prices||!c.trust_prices.length)return;
+ var entry={ts:Date.now(),brand:c.brand||"",line:c.line||"",vitola:c.vitola||vitola||"",
+  prices:c.trust_prices.map(function(p){return{vendor:p.vendor,per_stick:p.per_stick}}),
+  thumb:window.__tcBandThumb||null};
+ window.__tcBandThumb=null;
+ var list=tcHistLoad();
+ if(list.length&&list[0].brand===entry.brand&&list[0].line===entry.line&&list[0].vitola===entry.vitola&&(entry.ts-list[0].ts)<60000){list[0]=entry}
+ else list.unshift(entry);
+ list=list.slice(0,5); tcHistStore(list); tcRenderHistory();
+}
+function tcRenderHistory(){
+ var el=document.getElementById("histList"); if(!el)return;
+ var list=tcHistLoad();
+ if(!list.length){el.innerHTML="<div class='small'>No scans yet on this phone. Scan a band and its verdict lands here — with the prices it saw, date-stamped.</div>";return}
+ el.innerHTML=list.map(function(en,i){
+  var pr=en.prices.map(function(p){return esc(p.vendor)+": $"+Number(p.per_stick).toFixed(2)}).join(" · ");
+  return "<div class='histrow' data-i='"+i+"' style='display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #eee2c8;cursor:pointer'>"+
+   (en.thumb?"<img src='"+en.thumb+"' alt='' style='width:44px;height:44px;object-fit:cover;border-radius:8px'>":"")+
+   "<div><div><b>"+esc(en.brand)+" "+esc(en.line||"")+"</b>"+(en.vitola?" — "+esc(en.vitola):"")+"</div>"+
+   "<div class='small'>"+tcFmtDate(en.ts)+"</div><div class='small'>"+pr+"</div></div></div>"}).join("");
+ Array.prototype.forEach.call(el.querySelectorAll(".histrow"),function(row){row.addEventListener("click",function(){tcShowSnapshot(list[Number(row.getAttribute("data-i"))])})});
+}
+function tcShowSnapshot(en){
+ if(!en)return;
+ collapseToVerdict();
+ var v=document.getElementById("verdict"); v.style.display="block";
+ var lo=Math.min.apply(null,en.prices.map(function(p){return p.per_stick})), hi=Math.max.apply(null,en.prices.map(function(p){return p.per_stick}));
+ var rows=en.prices.map(function(p){return "<tr><td>"+esc(p.vendor)+"</td><td>$"+Number(p.per_stick).toFixed(2)+" / stick</td><td class='small'>As of "+tcFmtDate(en.ts)+"</td></tr>"}).join("");
+ v.innerHTML="<div class='name'>"+esc(en.brand)+" "+esc(en.line||"")+" — "+esc(en.vitola||"")+"</div>"+
+ "<div class='meta'>From your history — scanned "+tcFmtDate(en.ts)+"</div>"+
+ "<p><b>Prices when you scanned: $"+lo.toFixed(2)+" – $"+hi.toFixed(2)+" per stick</b> across "+en.prices.length+" trust-cleared retailer"+(en.prices.length>1?"s":"")+".</p>"+
+ "<table><tr><th>Retailer</th><th>Per-stick</th><th>Freshness</th></tr>"+rows+"</table>"+
+ "<button id='btnHistNow' class='secondary'>Check today's prices</button>";
+ v.scrollIntoView({behavior:"smooth"});
+ document.getElementById("btnHistNow").addEventListener("click",function(){
+  var rec=null;
+  for(var i=0;i<DATA.length;i++){var c=DATA[i]; if(norm(c.brand)===norm(en.brand)&&norm(c.line)===norm(en.line)&&norm(c.vitola||"")===norm(en.vitola||"")){rec=c;break}}
+  if(rec){showVerdict({brand:en.brand,line:en.line},en.vitola,rec)} else {pickLine({brand:en.brand,line:en.line})}
+ });
+}
+(function(){
+ var btn=document.getElementById("btnHist");
+ if(btn)btn.addEventListener("click",function(){var b=document.getElementById("histBody");var open=b.style.display!=="none";b.style.display=open?"none":"block";btn.textContent=open?"Show":"Hide";if(!open)tcRenderHistory()});
+ var save=document.getElementById("btnHistSave");
+ if(save)save.addEventListener("click",function(){
+  var em=(document.getElementById("histEmail").value||"").trim(), msg=document.getElementById("histSaveMsg");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){msg.textContent="That email doesn't look right. Check it and try again.";return}
+  try{localStorage.setItem("tc_member_email",em)}catch(e){}
+  var subject=encodeURIComponent("Save my TrustedCigar scan history");
+  var body=encodeURIComponent("Hi — please add "+em+" to the membership list for saved scan history (unlimited history, the prices each scan saw, and V2 price-change alerts).\n\n(Sent from the TrustedCigar scanner)");
+  window.location.href="mailto:partners@trustedcigar.com?subject="+subject+"&body="+body;
+  msg.textContent="You're on the list — we'll email you when membership opens.";
+ });
+ tcRenderHistory();
 })();
 </script>
 </body></html>

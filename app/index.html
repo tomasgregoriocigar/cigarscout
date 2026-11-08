@@ -74,6 +74,14 @@
   </div>
 </section>
 
+<section>
+  <div class="wrap">
+    <h2 class="sec">Your last scans</h2>
+    <div id="appHist"></div>
+    <p class="sub">Free history holds your last 5 scans on this phone — each with the prices it saw, date-stamped. Members keep every scan, unlimited. <a href="/scanner/">Open the scanner</a>.</p>
+  </div>
+</section>
+
 <section style="background:#f3e9d4">
   <div class="wrap">
     <div class="card member" id="tcAppCard">
@@ -153,6 +161,18 @@ if("serviceWorker" in navigator){
     navigator.serviceWorker.register("/sw.js").catch(function(){});
   });
 }
+</script>
+<script>
+(function(){
+ var el=document.getElementById("appHist"); if(!el)return;
+ var list=[]; try{list=JSON.parse(localStorage.getItem("tc_history_v1")||"[]")}catch(e){}
+ function es(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+ if(!list.length){el.innerHTML="<p class='sub'>No scans yet on this phone. Scan a cigar and it will appear here.</p>";return}
+ el.innerHTML=list.map(function(en){
+  var pr=en.prices.map(function(p){return es(p.vendor)+": $"+Number(p.per_stick).toFixed(2)}).join(" · ");
+  var d=""; try{d=new Date(en.ts).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"})}catch(e){}
+  return "<div class='card'><h3 style='margin:0'>"+es(en.brand)+" "+es(en.line||"")+(en.vitola?" — "+es(en.vitola):"")+"</h3><p class='ev' style='margin:4px 0 0'>"+d+"</p><p class='ev' style='margin:2px 0 0'>"+pr+"</p></div>"}).join("");
+})();
 </script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1a0436df2f214d81b4258178c56bba9b"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
