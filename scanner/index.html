@@ -132,7 +132,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-08.9</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-08.10</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -249,6 +249,19 @@ function linePickerEntries(L){
    });
   }
  }
+ /* Vitola-in-line recovery: some identities file the vitola inside the
+    line string ("1875 Romeos Court", vitola null) rather than as their
+    own line+vitola row. When a picker entry has no record, or its record
+    carries no verified price, look for that shape before the entry can
+    render a Not found — the priced record sits one joined string away. */
+ out.forEach(function(en){
+  if(!en.vitola)return;
+  if(en.rec&&en.rec.trust_prices&&en.rec.trust_prices.length)return;
+  var want=nl+" "+norm(en.vitola);
+  var cand=DATA.filter(function(c){return norm(c.brand)===nb&&norm(c.line)===want});
+  for(var i=0;i<cand.length;i++){if(cand[i].trust_prices&&cand[i].trust_prices.length){en.rec=cand[i];return}}
+  if(cand.length&&!en.rec)en.rec=cand[0];
+ });
  return out;
 }
 function pickLine(L){
@@ -262,6 +275,14 @@ function pickLine(L){
 function showVerdict(L,vitola,c){
  collapseToVerdict();
  var v=document.getElementById("verdict"); v.style.display="block";
+ /* Same vitola-in-line recovery at the verdict layer: never render Not
+    found while a priced record for this exact cigar exists filed under
+    the joined line+vitola string. */
+ if((!c||!c.trust_prices||!c.trust_prices.length)&&L&&vitola){
+  var wantV=norm(L.line)+" "+norm(vitola);
+  var altV=DATA.filter(function(x){return norm(x.brand)===norm(L.brand)&&norm(x.line)===wantV&&x.trust_prices&&x.trust_prices.length});
+  if(altV.length)c=altV[0];
+ }
  if(!c||!c.trust_prices||!c.trust_prices.length){
    v.innerHTML="<div class='name'>"+esc(L.brand)+" "+esc(L.line||"")+" — "+esc(vitola)+"</div><div class='meta'>Verdict</div><p><b>Not found</b> — no verified price for this exact cigar at a trust-cleared retailer. We never guess a verdict.</p>"; v.scrollIntoView({behavior:"smooth"}); return;
  }
