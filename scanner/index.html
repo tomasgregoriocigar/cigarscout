@@ -521,10 +521,36 @@ function renderBandLimit(){
  $("bName").textContent="That's today's five";
  $("bMeta").textContent="Free-service limit reached for today.";
  $("bPill").style.display="none";
- $("bLines").innerHTML="Unfortunately, as a free service, we have a per-user limit of <b>5 successful scans a day</b> — and you've used today's five. Please come back tomorrow.<div style='margin-top:8px'>You can still type the brand or line in the search on this page — the price verdict is the same.</div>";
+ var subbed=false;
+ try{subbed=!!localStorage.getItem("tc_subscribed")}catch(e){}
+ var html="Unfortunately, as a free service, we have a per-user limit of <b>5 successful scans a day</b>, and you've used today's five. Please come back tomorrow.<div style='margin-top:8px'>You can still type the brand or line in the search on this page. The price verdict is the same.</div>";
+ if(!subbed){
+  html+="<div style='margin-top:12px'>Join the free mailing list and today's limit doubles: <b>5 more scans, right now.</b></div><div style='margin-top:8px;display:flex;gap:8px;flex-wrap:wrap'><input id='subEmail' type='email' placeholder='you@email.com' style='flex:1;min-width:180px;padding:10px;border-radius:8px;border:1px solid #6b543a;background:#241a12;color:#f5ead9'><button id='subBtn' class='btn' type='button'>Join and unlock 5 more</button></div><div id='subMsg' style='margin-top:6px'></div>";
+ }
+ $("bLines").innerHTML=html;
  $("bBtns").style.display="none";
  $("bMoreRow").style.display="none";
  showBandCard();
+ if(!subbed){
+  var btn=$("subBtn");
+  if(btn)btn.addEventListener("click",subscribeFromLimit);
+ }
+}
+function subscribeFromLimit(){
+ var inp=$("subEmail"),msg=$("subMsg");
+ var email=((inp&&inp.value)||"").trim();
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){if(msg)msg.textContent="That email doesn't look right. Check it and try again.";return}
+ if(msg)msg.textContent="Joining...";
+ fetch(VISION_ENDPOINT.replace(/\/identify$/,"/subscribe"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email})})
+ .then(function(r){return r.json()})
+ .then(function(j){
+  if(j&&j.ok){
+   try{localStorage.setItem("tc_subscribed","1")}catch(e){}
+   $("bName").textContent="You're on the list";
+   $("bLines").innerHTML="Five more scans are unlocked for today. Scan the next band whenever you're ready.";
+  }else if(msg){msg.textContent="That didn't take. Try once more in a moment."}
+ })
+ .catch(function(){if(msg)msg.textContent="That didn't take. Try once more in a moment."});
 }
 function renderBandError(html){
  $("bName").textContent="The band reader didn't run";
