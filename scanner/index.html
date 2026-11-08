@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"><title>TrustedCigar Scanner</title>
 <style>
 :root{--bg:#171310;--panel:#221c17;--panel2:#2b241d;--ink:#f3ead9;--muted:#b8a98f;--gold:#d9a441;--green:#57c46a;--red:#e2604d;--line:#3a322a}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:16px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:calc(14px + env(safe-area-inset-top)) 16px 16px}
 h1{font-size:21px;margin:0}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--green);margin-right:8px}
 .sub{color:var(--muted);font-size:14px;margin-top:5px;line-height:1.45}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:14px}
@@ -38,7 +38,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 #scanAgainBar{position:sticky;top:8px;z-index:6}
 #scanAgainBar button{margin-top:0;box-shadow:0 4px 18px rgba(0,0,0,.5)}
 </style></head><body>
-<div style="margin:0 0 10px"><a href="/app/" style="display:inline-block;color:#d8a94e;text-decoration:none;font-weight:700;border:1px solid #d8a94e;border-radius:999px;padding:7px 16px">&#8249; Home</a></div>
+<div style="position:sticky;top:calc(4px + env(safe-area-inset-top));z-index:60;margin:0 0 10px"><a href="/app/" style="display:inline-block;color:#ffe1a1;background:#2b241d;text-decoration:none;font-weight:700;border:1px solid #d8a94e;border-radius:999px;padding:8px 18px;box-shadow:0 4px 14px rgba(0,0,0,.45)">&#8249; Home</a></div>
 <header><h1><span class="dot"></span>TrustedCigar Scanner</h1>
 <div class="sub">Check a cigar before you buy it. Start with the band: photograph it and get the verdict — today's verified price per stick across retailers that meet the Standard (Neptune Cigar, Best Cigar Prices, Cigar Page, Smoke Inn) — read from the retailer's own page, never guessed. The band reaches far more cigars than the barcode does; most sticks carry no barcode we hold. Two bands on the stick? Photograph each one — every band adds evidence. Barcodes are read on your phone; a band photo is sent to our vision reader for the read and is never kept by us — a small copy stays on your phone only, for your own scan history. No account, no tracking. Stock status is shown only for paying partner retailers; there are none yet, so no stock status appears. A cigar with no verified price reads “not found.”</div></header>
 
@@ -132,7 +132,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-08.7</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-08.8</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -1035,4 +1035,5 @@ function tcShowSnapshot(en){
  tcRenderHistory();
 })();
 </script>
+<div style="text-align:center;margin:22px 0 6px"><a href="/app/" style="display:inline-block;color:#ffe1a1;background:#2b241d;text-decoration:none;font-weight:700;border:1px solid #d8a94e;border-radius:999px;padding:10px 22px">&#8249; Home</a></div>
 </body></html>
