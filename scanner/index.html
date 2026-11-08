@@ -42,9 +42,9 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 
 <div id="scanAgainBar" style="display:none"><button id="btnScanAgain">Scan another cigar</button></div>
 <div id="scanEfforts">
-<div class="card hero"><div style="font-weight:700">Step 1 — Photograph the band</div>
-<div class="small">The band names the cigar, and it reaches far more of the catalogue than a barcode — most sticks have no barcode we hold. Straight-on, fill the frame, mind the glare. <b>Two bands on the stick? Photograph each one</b> — after the first read you'll get the chance to add the other, and the reads combine.</div>
-<button id="btnBand">Photograph the band</button>
+<div class="card hero"><div style="font-weight:700">Step 1 — Scan or upload the band</div>
+<div class="small">The band names the cigar, and it reaches far more of the catalogue than a barcode — most sticks have no barcode we hold. On a phone, photograph it; on a computer, upload a picture of it — same read either way. Straight-on, fill the frame, mind the glare. <b>Two bands on the stick? Photograph each one</b> — after the first read you'll get the chance to add the other, and the reads combine.</div>
+<button id="btnBand">Scan or upload a band photo</button>
 <input id="bandInput" type="file" accept="image/*" capture="environment" style="display:none">
 </div>
 
@@ -52,7 +52,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <div id="reader"></div>
 <button id="btnStart">Start camera scan</button>
 <div class="row">
-<button id="btnPhoto" class="secondary">Photograph the barcode</button>
+<button id="btnPhoto" class="secondary">Photograph or upload the barcode</button>
 </div>
 <div class="row">
 <button id="btnTorch" class="secondary" disabled>Torch</button>
@@ -92,7 +92,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button id="btnBandNo" class="secondary">Not this one</button>
 </div>
 <div class="row" id="bMoreRow" style="display:none">
-<button id="btnBandMore" class="secondary">It has another band — scan it too</button>
+<button id="btnBandMore" class="secondary">It has another band — add its photo</button>
 </div>
 </div>
 <div class="card verdict" id="verdict" style="display:none"></div>
