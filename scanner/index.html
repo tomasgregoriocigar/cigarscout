@@ -844,6 +844,30 @@ $("btnScanAgain").addEventListener("click",function(){
  for(var i=0;i<dis.length;i++) dis[i].addEventListener("click",function(){ setDismissed(); hide(); });
  var ua=navigator.userAgent||"";
  var isIOS=(/iphone|ipad|ipod/i.test(ua))||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+ /* One-tap install bar: a single gold button, always within thumb reach.
+    Android with a captured prompt: the tap fires the system install
+    prompt directly (true one tap). iOS: the tap opens the two-tap card
+    and scrolls to it (Apple allows no shorter path from the web).
+    Hidden when already installed (standalone) or dismissed. */
+ var tcBar=document.createElement("div");
+ tcBar.id="tcInstallBar";
+ tcBar.style.cssText="position:fixed;left:0;right:0;bottom:0;z-index:60;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(20,13,8,.97);border-top:1px solid var(--gold);display:none";
+ tcBar.innerHTML='<button type="button" id="tcInstallBarBtn" style="width:100%;margin:0">Put TrustedCigar on my home screen</button>';
+ document.body.appendChild(tcBar);
+ var tcBarBtn=document.getElementById("tcInstallBarBtn");
+ function syncBar(){
+   var showBar=!standalone&&!dismissed()&&(isIOS||deferredPrompt);
+   tcBar.style.display=showBar?"block":"none";
+   document.body.style.paddingBottom=showBar?"80px":"";
+ }
+ if(tcBarBtn) tcBarBtn.addEventListener("click",function(){
+   if(deferredPrompt){ var p=deferredPrompt; deferredPrompt=null; p.prompt(); if(p.userChoice&&p.userChoice.then) p.userChoice.then(function(){ hide(); syncBar(); }); }
+   else if(isIOS){ show("ios"); if(banner) banner.scrollIntoView({behavior:"smooth",block:"center"}); }
+ });
+ for(var j=0;j<dis.length;j++) dis[j].addEventListener("click",function(){ tcBar.style.display="none"; document.body.style.paddingBottom=""; });
+ window.addEventListener("appinstalled",function(){ hide(); tcBar.style.display="none"; document.body.style.paddingBottom=""; });
+ window.addEventListener("beforeinstallprompt",function(){ setTimeout(syncBar,0); });
+ syncBar();
  var verdicts=0;
  function noteVerdict(){
    verdicts++;
