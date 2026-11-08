@@ -525,20 +525,17 @@ function renderBandCandidate(){
  var pill=$("bPill");pill.style.display="inline-block";
  pill.className="pill "+(c.conf==="strong"?"good":"known");
  pill.textContent=(c.conf==="strong"?"Strong match":"Possible match")+" · band read: "+c.matched.join(" ");
- $("bLines").innerHTML="Is that the cigar in your hand? If it is, pick its vitola and we'll show the price verdict."+
-  (bandText?"<div class='bandtext'>Lettering we read: &ldquo;"+esc(bandText.slice(0,140))+"&rdquo;</div>":"");
+ $("bLines").innerHTML="Is that the cigar in your hand? If it is, pick its vitola and we'll show the price verdict.";
  $("bBtns").style.display="flex";
  $("bMoreRow").style.display="block";
  showBandCard();
 }
 function renderBandNoMatch(){
- $("bName").textContent="No match yet";
- $("bMeta").textContent="That band isn't matched to the catalogue yet.";
+ $("bName").textContent="We couldn't place that band";
+ $("bMeta").textContent="No catalogue match from that photo.";
  $("bPill").style.display="none";
- $("bLines").innerHTML=(bandText
-  ?"Here is the lettering the band gave us:<div class='bandtext'>&ldquo;"+esc(bandText.slice(0,180))+"&rdquo;</div>"
-  :"We couldn't read any lettering on that photo. A straight-on shot that fills the frame with the band, out of direct glare, reads best.")+
-  "<div style='margin-top:8px'>You can still type the brand or line in the search on this page — the verdict is the same.</div>";
+ $("bLines").innerHTML="A straight-on shot that fills the frame with the band, out of direct glare, reads best. If the cigar has a barcode, that read is exact."+
+  "<div style='margin-top:8px'>You can also type the brand or line in the search on this page — the verdict is the same.</div>";
  $("bBtns").style.display="none";
  $("bMoreRow").style.display="block";
  showBandCard();
