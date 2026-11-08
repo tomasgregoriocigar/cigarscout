@@ -38,6 +38,11 @@
   </div>
 </div>
 
+<div class="wrap" style="margin-top:14px">
+  <button id="appHistBtn" type="button" style="width:100%;background:#2b1d10;color:#ffe1a1;border:2px solid #d8a94e;border-radius:12px;padding:14px;font-size:17px;font-weight:700;cursor:pointer">History — your last scans<span id="appHistCount"></span></button>
+  <div id="appHistBody" style="display:none;margin-top:10px"></div>
+</div>
+
 <header class="site">
   <div class="wrap">
     <div class="brand">
@@ -71,14 +76,6 @@
       <div class="card"><h3><a href="/the-charge.html">The $14.95 charge</a></h3><p class="ev">Beware of hidden costs — the surprise add-on charge documented from consumer reports.</p></div>
       <div class="card"><h3><a href="/standard.html">The Standard</a></h3><p class="ev">How retailers are scored, what the bar is, and exactly what qualifying takes.</p></div>
     </div>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <h2 class="sec">Your last scans</h2>
-    <div id="appHist"></div>
-    <p class="sub">Free history holds your last 5 scans on this phone — each with the prices it saw, date-stamped. Members keep every scan, unlimited. <a href="/scanner/">Open the scanner</a>.</p>
   </div>
 </section>
 
@@ -164,14 +161,23 @@ if("serviceWorker" in navigator){
 </script>
 <script>
 (function(){
- var el=document.getElementById("appHist"); if(!el)return;
+ var btn=document.getElementById("appHistBtn"), body=document.getElementById("appHistBody"), cnt=document.getElementById("appHistCount");
+ if(!btn||!body)return;
  var list=[]; try{list=JSON.parse(localStorage.getItem("tc_history_v1")||"[]")}catch(e){}
  function es(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
- if(!list.length){el.innerHTML="<p class='sub'>No scans yet on this phone. Scan a cigar and it will appear here.</p>";return}
- el.innerHTML=list.map(function(en){
-  var pr=en.prices.map(function(p){return es(p.vendor)+": $"+Number(p.per_stick).toFixed(2)}).join(" · ");
-  var d=""; try{d=new Date(en.ts).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"})}catch(e){}
-  return "<div class='card'><h3 style='margin:0'>"+es(en.brand)+" "+es(en.line||"")+(en.vitola?" — "+es(en.vitola):"")+"</h3><p class='ev' style='margin:4px 0 0'>"+d+"</p><p class='ev' style='margin:2px 0 0'>"+pr+"</p></div>"}).join("");
+ if(cnt)cnt.textContent=list.length?" · "+list.length+" saved":"";
+ function render(){
+  if(!list.length){body.innerHTML="<div class='card'><p class='ev' style='margin:0'>No scans yet on this phone. Scan a cigar and it lands here — with the prices it saw, date-stamped. Free history holds your last 5; members keep every scan, unlimited.</p></div>";return}
+  body.innerHTML=list.map(function(en){
+   var pr=en.prices.map(function(p){return es(p.vendor)+": $"+Number(p.per_stick).toFixed(2)}).join(" · ");
+   var d=""; try{d=new Date(en.ts).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"})}catch(e){}
+   return "<a href='/scanner/' style='text-decoration:none;color:inherit'><div class='card' style='display:flex;gap:10px;align-items:center'>"+
+    (en.thumb?"<img src='"+en.thumb+"' alt='' style='width:44px;height:44px;object-fit:cover;border-radius:8px'>":"")+
+    "<div><h3 style='margin:0'>"+es(en.brand)+" "+es(en.line||"")+(en.vitola?" — "+es(en.vitola):"")+"</h3>"+
+    "<p class='ev' style='margin:4px 0 0'>"+d+"</p><p class='ev' style='margin:2px 0 0'>"+pr+"</p></div></div></a>"}).join("")+
+   "<p class='sub' style='margin-top:8px'>Tap a scan to reopen it in the scanner. Free history holds your last 5 on this phone; members keep every scan, unlimited.</p>";
+ }
+ btn.addEventListener("click",function(){var open=body.style.display!=="none";body.style.display=open?"none":"block";if(!open)render()});
 })();
 </script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1a0436df2f214d81b4258178c56bba9b"}'></script><!-- End Cloudflare Web Analytics -->
