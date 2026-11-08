@@ -664,14 +664,28 @@ function finishBandPooled(texts){
  }
 }
 var VISION_ENDPOINT="https://trustedcigar-band-vision.tomas-gregorio.workers.dev/identify";
+function visClean(s){return String(s||"").replace(/\([^)]*\)/g," ").replace(/\s+/g," ").trim()}
+function visBrandVariants(s){
+ var raw=String(s||""),out=[],outer=norm(visClean(raw));
+ if(outer)out.push(outer);
+ var m=raw.match(/\(([^)]*)\)/g)||[];
+ m.forEach(function(p){var v=norm(p.replace(/[()]/g," "));if(v&&out.indexOf(v)<0)out.push(v)});
+ return out;
+}
 function visionCandidates(resp){
  var out=[],seen={};
  (resp.candidates||[]).forEach(function(vc){
   if(!vc||!vc.brand)return;
-  var nb=norm(vc.brand),nl=norm(vc.line||""),e=null,i;
-  for(i=0;i<NAME_INDEX.length;i++){if(norm(NAME_INDEX[i].brand)===nb&&norm(NAME_INDEX[i].line)===nl){e=NAME_INDEX[i];break}}
-  if(!e&&nl){for(i=0;i<NAME_INDEX.length;i++){var y=NAME_INDEX[i];if(norm(y.brand)===nb&&(norm(y.line).indexOf(nl)>=0||nl.indexOf(norm(y.line))>=0)){e=y;break}}}
-  if(!e){var bl=NAME_INDEX.filter(function(z){return norm(z.brand)===nb});if(bl.length===1)e=bl[0]}
+  var rawLine=String(vc.line||"");
+  var variants=visBrandVariants(vc.brand),e=null,i,vi;
+  for(vi=0;vi<variants.length&&!e;vi++){
+   var nb=variants[vi],nl=norm(visClean(vc.line||""));
+   if(nl&&nl.indexOf(nb)===0)nl=nl.slice(nb.length).trim();
+   for(i=0;i<NAME_INDEX.length;i++){if(norm(NAME_INDEX[i].brand)===nb&&norm(NAME_INDEX[i].line)===nl){e=NAME_INDEX[i];break}}
+   if(!e&&nl){for(i=0;i<NAME_INDEX.length;i++){var y=NAME_INDEX[i];if(norm(y.brand)===nb&&(norm(y.line).indexOf(nl)>=0||nl.indexOf(norm(y.line))>=0)){e=y;break}}}
+   if(!e){var bl=NAME_INDEX.filter(function(z){return norm(z.brand)===nb});if(bl.length===1)e=bl[0]}
+   if(!e&&/original/i.test(rawLine)){var bl2=NAME_INDEX.filter(function(z){return norm(z.brand)===nb&&norm(z.line)==="classic"});if(bl2.length===1)e=bl2[0]}
+  }
   if(!e)return;
   var k=norm(e.brand)+"||"+norm(e.line);if(seen[k])return;seen[k]=1;
   out.push({entry:e,matched:e.tokens.slice(0,4),conf:(typeof vc.confidence==="number"&&vc.confidence>=0.5)?"strong":"possible",vconf:(typeof vc.confidence==="number"?vc.confidence:null)});
