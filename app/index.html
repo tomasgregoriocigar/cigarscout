@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrustedCigar — Your launch point</title>
+<meta name="description" content="TrustedCigar on your phone: scan a cigar for its verified per-stick price, check retailer trust, and read the Standard. Scores are never for sale.">
+<link rel="stylesheet" href="/styles.css">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#2E1B0E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TrustedCigar">
+<style>
+.scanbox{display:block;border:2px solid #d8a94e;border-radius:14px;padding:10px;margin:0 0 14px;background:rgba(216,169,78,.08);box-shadow:0 0 0 3px rgba(216,169,78,.22),0 0 24px rgba(216,169,78,.35);animation:heroPulse 2.6s ease-in-out infinite}
+@keyframes heroPulse{0%,100%{box-shadow:0 0 0 3px rgba(216,169,78,.18),0 0 16px rgba(216,169,78,.25)}50%{box-shadow:0 0 0 4px rgba(216,169,78,.32),0 0 30px rgba(216,169,78,.5)}}
+.scanbox .cta{display:block;text-align:center;margin:0}
+.member input[type=email]{width:100%;padding:13px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:16px;margin-top:10px}
+.member button{background:var(--amber);color:#fff;border:none;font-size:16px;font-weight:700;padding:13px 20px;border-radius:10px;cursor:pointer;width:100%;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div id="agegate" role="dialog" aria-modal="true" aria-labelledby="ag-title">
+  <div class="box">
+    <h2 id="ag-title">Are you 21 or older?</h2>
+    <p>TrustedCigar is a price and retailer-rating resource for adults of legal smoking age. We do not sell cigars.</p>
+    <button id="ag-yes">Yes — enter</button>
+    <button class="no" id="ag-no">No</button>
+    <p class="ev" id="ag-msg"></p>
+  </div>
+</div>
+
+<header class="site">
+  <div class="wrap">
+    <div class="brand">
+      <div class="mark">✓</div>
+      <div class="name">Trusted<b>Cigar</b></div>
+    </div>
+    <nav class="main">
+      <a href="/scanner/">Scan a cigar</a>
+      <a href="/trust-index.html">Retailer Trust Index</a>
+      <a href="/prices.html">Price checks</a>
+      <a href="/standard.html">The Standard</a>
+      <a href="/the-charge.html">The $14.95 charge</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>Your cigar, checked.</h1>
+    <p class="lede">Standing in the shop with a stick in your hand? Photograph the band and get today's verified per-stick price across the retailers that meet the Standard — read from their own pages, never guessed.</p>
+    <span class="scanbox"><a class="cta" href="/scanner/">Scan a cigar — check its price</a></span>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2 class="sec">Everything TrustedCigar does</h2>
+    <div class="cards">
+      <div class="card"><h3><a href="/prices.html">Price checks</a></h3><p class="ev">Verified per-stick prices across trust-cleared retailers, checked on the retailer's own page.</p></div>
+      <div class="card"><h3><a href="/trust-index.html">Retailer Trust Index</a></h3><p class="ev">Every major online cigar retailer, scored on published evidence. Scores are never for sale.</p></div>
+      <div class="card"><h3><a href="/the-charge.html">The $14.95 charge</a></h3><p class="ev">Beware of hidden costs — the surprise add-on charge documented from consumer reports.</p></div>
+      <div class="card"><h3><a href="/standard.html">The Standard</a></h3><p class="ev">How retailers are scored, what the bar is, and exactly what qualifying takes.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:#f3e9d4">
+  <div class="wrap">
+    <div class="card member" id="tcAppCard">
+      <h3 style="margin-top:0">Put TrustedCigar on your phone</h3>
+      <div id="tcAppForm">
+        <p class="ev" style="margin:0">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</p>
+        <input id="tcAppEmail" type="email" placeholder="you@email.com" autocomplete="email">
+        <button id="tcAppBtn" type="button">Email me the app link</button>
+        <div class="ev" id="tcAppMsg" style="margin-top:8px"></div>
+      </div>
+      <div id="tcAppDone" style="display:none">
+        <p style="margin:0"><strong>You're on the list — the link is on its way.</strong></p>
+        <p class="ev" id="tcAppDoneEmail" style="margin:6px 0 0"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="wrap">
+    <p><strong>Disclosures.</strong> TrustedCigar does not sell cigars. Scores are never for sale. Tobacco products are for adults 21+. Please smoke responsibly.</p>
+    <p>© 2026 TrustedCigar. The seal is a certification of the retailer, never of a cigar.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var gate=document.getElementById('agegate');
+  try{ if(sessionStorage.getItem('tc-age')==='1'){ gate.style.display='none'; } }catch(e){}
+  document.getElementById('ag-yes').addEventListener('click',function(){
+    try{ sessionStorage.setItem('tc-age','1'); }catch(e){}
+    gate.style.display='none';
+  });
+  document.getElementById('ag-no').addEventListener('click',function(){
+    document.getElementById('ag-msg').textContent='Sorry — this resource is for adults 21 and older.';
+  });
+})();
+</script>
+<script>
+/* TrustedCigar app link — shared with the scanner page.
+   TODO: POST the signup to the Worker /subscribe endpoint once that deploy
+   is unparked. Today the request rides a prefilled email to
+   partners@trustedcigar.com so no signup is lost. */
+function tcSendAppLink(email){
+  email=(email||"").trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return false;
+  try{ localStorage.setItem("tc_member_email", email); }catch(e){}
+  var subject=encodeURIComponent("Send me the TrustedCigar app link");
+  var body=encodeURIComponent("Hi — please send the TrustedCigar app link to "+email+" so I can put the scanner on my phone.\n\n(Sent from trustedcigar.com)");
+  window.location.href="mailto:partners@trustedcigar.com?subject="+subject+"&body="+body;
+  tcRenderAppCard();
+  return true;
+}
+function tcRenderAppCard(){
+  var member=null;
+  try{ member=localStorage.getItem("tc_member_email"); }catch(e){}
+  var form=document.getElementById("tcAppForm"), done=document.getElementById("tcAppDone");
+  if(!form||!done) return;
+  if(member){
+    form.style.display="none"; done.style.display="block";
+    var d=document.getElementById("tcAppDoneEmail");
+    if(d) d.textContent="App link requested for "+member+".";
+  } else {
+    form.style.display="block"; done.style.display="none";
+  }
+}
+(function(){
+  var btn=document.getElementById("tcAppBtn");
+  if(btn) btn.addEventListener("click",function(){
+    var inp=document.getElementById("tcAppEmail"), msg=document.getElementById("tcAppMsg");
+    if(!tcSendAppLink(inp?inp.value:"") && msg) msg.textContent="That email doesn't look right. Check it and try again.";
+  });
+  tcRenderAppCard();
+})();
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){
+    navigator.serviceWorker.register("/sw.js").catch(function(){});
+  });
+}
+</script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1a0436df2f214d81b4258178c56bba9b"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

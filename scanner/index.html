@@ -6,7 +6,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TrustedCigar">
-<link rel="manifest" href="manifest.json"><title>TrustedCigar Scanner</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"><title>TrustedCigar Scanner</title>
 <style>
 :root{--bg:#171310;--panel:#221c17;--panel2:#2b241d;--ink:#f3ead9;--muted:#b8a98f;--gold:#d9a441;--green:#57c46a;--red:#e2604d;--line:#3a322a}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:16px}
@@ -96,7 +97,32 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 </div>
 </div>
 <div class="card verdict" id="verdict" style="display:none"></div>
+<div class="card" id="tcInstall" style="display:none;border:1px solid var(--gold)">
+<div id="tcInstallAndroid" style="display:none">
+<div style="font-weight:700">Put TrustedCigar on your phone</div>
+<div class="small">Install the scanner as an app: it opens straight here, full-screen, with no browser bars — your permanent launch point for the verdict.</div>
+<button id="tcInstallBtn" type="button">Install TrustedCigar</button>
+<button class="secondary tcInstallDismiss" type="button">Not now</button>
+</div>
+<div id="tcInstallIos" style="display:none">
+<div style="font-weight:700">Put TrustedCigar on your phone</div>
+<div class="small">Two taps and the scanner lives on your home screen like an app:</div>
+<div style="margin-top:8px;font-size:15px;line-height:1.65">1. Tap the <b>Share</b> button <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d9a441" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px" aria-hidden="true"><path d="M12 15V4"/><path d="M8 7l4-4 4 4"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg> in Safari's toolbar.<br>2. Tap <b>Add to Home Screen</b>, then <b>Add</b>.</div>
+<button class="secondary tcInstallDismiss" type="button">Not now</button>
+</div>
+</div>
 <div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div></div>
+<div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
+<div id="tcAppForm">
+<div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
+<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><input id="tcAppEmail" type="email" placeholder="you@email.com" style="flex:1;min-width:180px;padding:10px;border-radius:8px;border:1px solid #6b543a;background:#241a12;color:#f5ead9"><button id="tcAppBtn" type="button" style="width:auto;margin-top:0">Email me the app link</button></div>
+<div class="small" id="tcAppMsg" style="margin-top:6px"></div>
+</div>
+<div id="tcAppDone" style="display:none">
+<div><b>You're on the list — the link is on its way.</b></div>
+<div class="small" id="tcAppDoneEmail" style="margin-top:4px"></div>
+</div>
+</div>
 <p class="small" style="text-align:center;margin:18px 0">TrustedCigar · Consumer-first cigar price checks · Scores are never for sale · trustedcigar.com</p>
 <script>
 var TRUST_STANDING={"Neptune Cigar":"Trust-cleared — Approved","Best Cigar Prices":"Trust-cleared — Approved (BBB A+)","Cigar Page":"Trust-cleared — Approved","Smoke Inn":"Trust-cleared — Approved (BBB A+)"};
@@ -782,4 +808,90 @@ $("btnScanAgain").addEventListener("click",function(){
  window.scrollTo({top:0,behavior:"smooth"});
 });
 </script><!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1a0436df2f214d81b4258178c56bba9b"}'></script><!-- End Cloudflare Web Analytics -->
+<script>
+/* TrustedCigar app install + app link (build v1, Nov 7 2026). Added after
+   the production scripts; wraps showVerdict without touching it. */
+(function(){
+ "use strict";
+ if("serviceWorker" in navigator){
+   window.addEventListener("load",function(){ navigator.serviceWorker.register("/sw.js").catch(function(){}); });
+ }
+ var standalone=false;
+ try{ standalone=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true; }catch(e){}
+ function dismissed(){ try{ return localStorage.getItem("tc_install_dismissed")==="1"; }catch(e){ return false; } }
+ function setDismissed(){ try{ localStorage.setItem("tc_install_dismissed","1"); }catch(e){} }
+ var banner=document.getElementById("tcInstall");
+ var elA=document.getElementById("tcInstallAndroid"), elI=document.getElementById("tcInstallIos");
+ var deferredPrompt=null;
+ function show(which){
+   if(!banner||standalone||dismissed()) return;
+   if(elA) elA.style.display=(which==="android")?"block":"none";
+   if(elI) elI.style.display=(which==="ios")?"block":"none";
+   banner.style.display="block";
+ }
+ function hide(){ if(banner) banner.style.display="none"; }
+ window.addEventListener("beforeinstallprompt",function(e){
+   e.preventDefault(); deferredPrompt=e; show("android");
+ });
+ var btn=document.getElementById("tcInstallBtn");
+ if(btn) btn.addEventListener("click",function(){
+   if(!deferredPrompt) return;
+   var p=deferredPrompt; deferredPrompt=null;
+   p.prompt();
+   if(p.userChoice&&p.userChoice.then) p.userChoice.then(function(){ hide(); });
+ });
+ var dis=document.querySelectorAll(".tcInstallDismiss");
+ for(var i=0;i<dis.length;i++) dis[i].addEventListener("click",function(){ setDismissed(); hide(); });
+ var ua=navigator.userAgent||"";
+ var isIOS=(/iphone|ipad|ipod/i.test(ua))||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+ var verdicts=0;
+ function noteVerdict(){
+   verdicts++;
+   if(verdicts!==1) return;
+   if(deferredPrompt) show("android");
+   else if(isIOS) show("ios");
+ }
+ if(typeof window.showVerdict==="function"){
+   var origShowVerdict=window.showVerdict;
+   window.showVerdict=function(L,vitola,c){
+     origShowVerdict(L,vitola,c);
+     if(c&&c.trust_prices&&c.trust_prices.length) noteVerdict();
+   };
+ }
+ /* Get the app link card. */
+ window.tcSendAppLink=function(email){
+   email=(email||"").trim();
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return false;
+   try{ localStorage.setItem("tc_member_email",email); }catch(e){}
+   /* TODO: POST this signup to the Worker /subscribe endpoint once that
+      deploy is unparked. Today the request rides a prefilled email to
+      partners@trustedcigar.com so no signup is lost. */
+   var subject=encodeURIComponent("Send me the TrustedCigar app link");
+   var body=encodeURIComponent("Hi \u2014 please send the TrustedCigar app link to "+email+" so I can put the scanner on my phone.\n\n(Sent from trustedcigar.com)");
+   window.location.href="mailto:partners@trustedcigar.com?subject="+subject+"&body="+body;
+   tcRenderAppCard();
+   return true;
+ };
+ function tcRenderAppCard(){
+   var member=null;
+   try{ member=localStorage.getItem("tc_member_email"); }catch(e){}
+   var form=document.getElementById("tcAppForm"), done=document.getElementById("tcAppDone");
+   if(!form||!done) return;
+   if(member){
+     form.style.display="none"; done.style.display="block";
+     var d=document.getElementById("tcAppDoneEmail");
+     if(d) d.textContent="App link requested for "+member+".";
+   } else {
+     form.style.display="block"; done.style.display="none";
+   }
+ }
+ window.tcRenderAppCard=tcRenderAppCard;
+ var abtn=document.getElementById("tcAppBtn");
+ if(abtn) abtn.addEventListener("click",function(){
+   var inp=document.getElementById("tcAppEmail"), msg=document.getElementById("tcAppMsg");
+   if(!window.tcSendAppLink(inp?inp.value:"")&&msg) msg.textContent="That email doesn't look right. Check it and try again.";
+ });
+ tcRenderAppCard();
+})();
+</script>
 </body></html>

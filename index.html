@@ -17,6 +17,7 @@
 <meta name="description" content="TrustedCigar rates online cigar retailers on how their own customers experience them, and checks cigar prices per stick across the retailers that meet the standard. Scores are never for sale.">
 <link rel="stylesheet" href="styles.css">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#2b1d10">
 <style>
 .scanbox{display:block;border:2px solid #d8a94e;border-radius:14px;padding:10px;margin:0 0 14px;background:rgba(216,169,78,.08);box-shadow:0 0 0 3px rgba(216,169,78,.22),0 0 24px rgba(216,169,78,.35);animation:heroPulse 2.6s ease-in-out infinite}
@@ -144,6 +145,13 @@ nav.main a.scan-nav{border:2px solid #d8a94e;border-radius:999px;padding:4px 12p
     requestAnimationFrame(step);
   }).catch(function(){});
 })();
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){
+    navigator.serviceWorker.register("/sw.js").catch(function(){});
+  });
+}
 </script>
 </body>
 </html>
