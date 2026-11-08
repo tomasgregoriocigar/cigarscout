@@ -517,6 +517,15 @@ function renderBandNoMatch(){
  $("bMoreRow").style.display="block";
  showBandCard();
 }
+function renderBandLimit(){
+ $("bName").textContent="That's today's five";
+ $("bMeta").textContent="Free-service limit reached for today.";
+ $("bPill").style.display="none";
+ $("bLines").innerHTML="Unfortunately, as a free service, we have a per-user limit of <b>5 successful scans a day</b> — and you've used today's five. Please come back tomorrow.<div style='margin-top:8px'>You can still type the brand or line in the search on this page — the price verdict is the same.</div>";
+ $("bBtns").style.display="none";
+ $("bMoreRow").style.display="none";
+ showBandCard();
+}
 function renderBandError(html){
  $("bName").textContent="The band reader didn't run";
  $("bMeta").textContent="";
@@ -643,6 +652,11 @@ function tryVisionBand(file,done){
     .then(function(r){return r.json().then(function(j){return {status:r.status,j:j}})})
     .then(function(res){
      clearTimeout(to);
+     if(res.j&&res.j.error==="daily_limit"){
+      if(bandCands.length){renderBandCandidate()}
+      else{renderBandLimit()}
+      done(true);return;
+     }
      if(res.status===200&&res.j&&res.j.candidates&&res.j.candidates.length){
       var mapped=visionCandidates(res.j);
       if(mapped.length){
