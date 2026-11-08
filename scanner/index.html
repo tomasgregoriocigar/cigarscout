@@ -45,20 +45,24 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <div id="scanEfforts">
 <div class="card hero"><div style="font-weight:700">Step 1 — Scan or upload the band</div>
 <div class="small">The band names the cigar, and it reaches far more of the catalogue than a barcode — most sticks have no barcode we hold. On a phone, photograph it; on a computer, upload a picture of it — same read either way. Straight-on, fill the frame, mind the glare. <b>Two bands on the stick? Photograph each one</b> — after the first read you'll get the chance to add the other, and the reads combine.</div>
-<button id="btnBand">Scan or upload a band photo</button>
+<button id="btnBand">Take a photo of the band</button>
+<div class="row"><button id="btnBandUpload" class="secondary">Upload a band photo</button></div>
 <input id="bandInput" type="file" accept="image/*" capture="environment" style="display:none">
+<input id="bandUploadInput" type="file" accept="image/*" style="display:none">
 </div>
 
 <div class="card"><div style="font-weight:700">Or scan the barcode</div>
 <div id="reader"></div>
 <button id="btnStart">Start camera scan</button>
 <div class="row">
-<button id="btnPhoto" class="secondary">Photograph or upload the barcode</button>
+<button id="btnPhoto" class="secondary">Photograph the barcode</button>
+<button id="btnPhotoUpload" class="secondary">Upload a barcode photo</button>
 </div>
 <div class="row">
 <button id="btnTorch" class="secondary" disabled>Torch</button>
 </div>
 <input id="photoInput" type="file" accept="image/*" capture="environment" style="display:none">
+<input id="photoUploadInput" type="file" accept="image/*" style="display:none">
 <div class="status" id="status">Camera is off. Tap <b>Start camera scan</b> and allow camera access.</div>
 </div>
 
@@ -93,7 +97,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button id="btnBandNo" class="secondary">Not this one</button>
 </div>
 <div class="row" id="bMoreRow" style="display:none">
-<button id="btnBandMore" class="secondary">It has another band — add its photo</button>
+<button id="btnBandMore" class="secondary">It has another band — photograph it</button>
+<button id="btnBandMoreUpload" class="secondary">Upload the other band's photo</button>
 </div>
 </div>
 <div class="card verdict" id="verdict" style="display:none"></div>
@@ -111,7 +116,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-08.3</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-08.4</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -390,7 +395,8 @@ $("btnTorch").addEventListener("click",function(){
  }catch(e){setStatus("Torch isn't available to web pages on this phone — known iPhone web limit. Photo mode is the fallback.");}
 });
 $("btnPhoto").addEventListener("click",function(){$("photoInput").click()});
-$("photoInput").addEventListener("change",function(ev){
+$("btnPhotoUpload").addEventListener("click",function(){$("photoUploadInput").click()});
+function onBarcodePhoto(ev){
  var f=ev.target.files&&ev.target.files[0];if(!f)return;
  loadLib(function(){
   if(!scanner)makeScanner();
@@ -403,7 +409,9 @@ $("photoInput").addEventListener("change",function(ev){
   });
  });
  ev.target.value="";
-});
+}
+$("photoInput").addEventListener("change",onBarcodePhoto);
+$("photoUploadInput").addEventListener("change",onBarcodePhoto);
 $("btnManual").addEventListener("click",function(){
  var code=$("manual").value.replace(/\D/g,"");
  if(!code){setStatus("Type a UPC first.");return}
@@ -793,13 +801,17 @@ function runBandOcr(file){
  });
 }
 $("btnBand").addEventListener("click",function(){bandMoreMode=false;bandPool=null;bandOcrTexts=[];$("bandInput").click()});
+$("btnBandUpload").addEventListener("click",function(){bandMoreMode=false;bandPool=null;bandOcrTexts=[];$("bandUploadInput").click()});
 $("btnBandMore").addEventListener("click",function(){bandMoreMode=true;$("bandInput").click()});
-$("bandInput").addEventListener("change",function(ev){
+$("btnBandMoreUpload").addEventListener("click",function(){bandMoreMode=true;$("bandUploadInput").click()});
+function onBandFile(ev){
  var f=ev.target.files&&ev.target.files[0];
  ev.target.value="";
  if(!f)return;
  runBandPhoto(f);
-});
+}
+$("bandInput").addEventListener("change",onBandFile);
+$("bandUploadInput").addEventListener("change",onBandFile);
 $("btnBandYes").addEventListener("click",function(){
  var c=bandCands[bandIdx];if(!c)return;
  $("bandCard").style.display="none";
