@@ -13,6 +13,9 @@
 h1{font-size:21px;margin:0}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--green);margin-right:8px}
 .sub{color:var(--muted);font-size:14px;margin-top:5px;line-height:1.45}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:14px}
+.card.hero{border:2px solid var(--gold);box-shadow:0 0 0 3px rgba(216,169,78,.22),0 0 24px rgba(216,169,78,.35);animation:heroPulse 2.6s ease-in-out infinite}
+@keyframes heroPulse{0%,100%{box-shadow:0 0 0 3px rgba(216,169,78,.18),0 0 16px rgba(216,169,78,.25)}50%{box-shadow:0 0 0 4px rgba(216,169,78,.32),0 0 30px rgba(216,169,78,.5)}}
+.card.hero button#btnBand{outline:2px solid #ffe1a1;outline-offset:2px}
 button{appearance:none;border:0;border-radius:12px;padding:13px 15px;font-size:15px;font-weight:600;background:var(--gold);color:#1d1607;width:100%;margin-top:9px;cursor:pointer}
 button.secondary{background:var(--panel2);color:var(--ink);border:1px solid var(--line);text-align:left}
 button:disabled{opacity:.45}
@@ -39,7 +42,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 
 <div id="scanAgainBar" style="display:none"><button id="btnScanAgain">Scan another cigar</button></div>
 <div id="scanEfforts">
-<div class="card"><div style="font-weight:700">Step 1 — Photograph the band</div>
+<div class="card hero"><div style="font-weight:700">Step 1 — Photograph the band</div>
 <div class="small">The band names the cigar, and it reaches far more of the catalogue than a barcode — most sticks have no barcode we hold. Straight-on, fill the frame, mind the glare. <b>Two bands on the stick? Photograph each one</b> — after the first read you'll get the chance to add the other, and the reads combine.</div>
 <button id="btnBand">Photograph the band</button>
 <input id="bandInput" type="file" accept="image/*" capture="environment" style="display:none">
