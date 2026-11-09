@@ -169,7 +169,9 @@ if("serviceWorker" in navigator){
  function render(){
   if(!list.length){body.innerHTML="<div class='card'><p class='ev' style='margin:0'>No scans yet on this phone. Scan a cigar and it lands here — with the prices it saw, date-stamped. Free history holds your last 5; members keep every scan, unlimited.</p></div>";return}
   body.innerHTML=list.map(function(en){
-   var pr=en.prices.map(function(p){return es(p.vendor)+": $"+Number(p.per_stick).toFixed(2)}).join(" · ");
+   var pr=(en.prices||[]).map(function(p){return es(p.vendor)+": $"+Number(p.per_stick).toFixed(2)}).join(" · ");
+   if(en.miss&&!en.found)pr="Not priced yet — we're hunting it. It fills in here the day we land a verified price.";
+   else if(en.found)pr="Found since your scan · "+pr;
    var d=""; try{d=new Date(en.ts).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"})}catch(e){}
    return "<a href='/scanner/' style='text-decoration:none;color:inherit'><div class='card' style='display:flex;gap:10px;align-items:center'>"+
     (en.thumb?"<img src='"+en.thumb+"' alt='' style='width:44px;height:44px;object-fit:cover;border-radius:8px'>":"")+
