@@ -132,7 +132,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-08.10</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-08.11</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -284,7 +284,15 @@ function showVerdict(L,vitola,c){
   if(altV.length)c=altV[0];
  }
  if(!c||!c.trust_prices||!c.trust_prices.length){
-   v.innerHTML="<div class='name'>"+esc(L.brand)+" "+esc(L.line||"")+" — "+esc(vitola)+"</div><div class='meta'>Verdict</div><p><b>Not found</b> — no verified price for this exact cigar at a trust-cleared retailer. We never guess a verdict.</p>"; v.scrollIntoView({behavior:"smooth"}); return;
+   var nf="<div class='name'>"+esc(L.brand)+" "+esc(L.line||"")+" — "+esc(vitola)+"</div><div class='meta'>Verdict</div><p><b>Not found</b> — no verified price for this exact cigar at a trust-cleared retailer. We never guess a verdict.</p>";
+   /* No price is not a dead end: when the catalogue knows the cigar
+      itself, the card still gives the smoker the cigar — size, strength,
+      wrapper, origin, rating and tasting notes, with the source named. */
+   if(c&&(c.strength||c.wrapper||c.origin||c.notes||c.rating||c.length_in||c.ring_gauge)){
+    var bits=[c.length_in?c.length_in+" in":"",c.ring_gauge?"× "+c.ring_gauge+" ring":"",c.strength?("Strength: "+c.strength):"",c.wrapper?("Wrapper: "+c.wrapper):"",c.origin?("Origin: "+c.origin):"",c.rating?("Rating "+c.rating+(c.rating_source?" ("+c.rating_source+")":"")):""].filter(Boolean).join(" · ");
+    nf+="<div class='meta'>About this cigar</div>"+(bits?"<p class='small'>"+esc(bits)+"</p>":"")+(c.notes?"<p class='small'>Tasting notes: "+esc(c.notes)+"</p>":"")+(c.profile_source?"<p class='small'>Profile: "+esc(c.profile_source)+"</p>":"");
+   }
+   v.innerHTML=nf; v.scrollIntoView({behavior:"smooth"}); return;
  }
  var prices=c.trust_prices; var lo=prices[0].per_stick, hi=prices[prices.length-1].per_stick;
  var rows=prices.map(function(p){return "<tr><td>"+esc(p.vendor)+"<br><span class='small'>"+esc(TRUST_STANDING[p.vendor]||"Trust-cleared")+"</span>"+(HIDDEN_COST[p.vendor]?"<br><span class='warn'>⚠ Hidden-cost warning: "+esc(HIDDEN_COST[p.vendor])+"</span>":"")+"</td><td>$"+p.per_stick.toFixed(2)+" / stick</td><td class='small'>Verified "+esc((p.checked_at||"").slice(0,10))+"</td></tr>"}).join("");
@@ -292,6 +300,7 @@ function showVerdict(L,vitola,c){
  "<div class='meta'>"+[c.length_in?c.length_in+" in":"",c.ring_gauge?"× "+c.ring_gauge+" ring":"",c.strength||"",c.origin||"",c.wrapper?c.wrapper+" wrapper":""].filter(Boolean).join(" · ")+(c.rating?" · Rating "+c.rating+(c.rating_source?" ("+esc(c.rating_source)+")":""):"")+"</div>"+
  "<p><b>Verified range: $"+lo.toFixed(2)+" – $"+hi.toFixed(2)+" per stick</b> across "+prices.length+" trust-cleared retailer"+(prices.length>1?"s":"")+". Best verified: $"+lo.toFixed(2)+".</p>"+
  (c.msrp?"<p class='small'>MSRP: $"+Number(c.msrp).toFixed(2)+" per stick</p>":"<p class='small'>MSRP: not recorded for this cigar</p>")+
+ (c.notes?"<p class='small'>Tasting notes: "+esc(c.notes)+(c.profile_source?" ("+esc(c.profile_source)+")":"")+"</p>":"")+
  "<table><tr><th>Retailer</th><th>Per-stick</th><th>Freshness</th></tr>"+rows+"</table>"+
  "<p class='small'>Stock status is not displayed — it is shown only for paying partner retailers, and there are none yet.</p>";
  v.scrollIntoView({behavior:"smooth"});
