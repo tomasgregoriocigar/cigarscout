@@ -132,7 +132,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-08.11</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-08.12</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -166,7 +166,7 @@ document.getElementById("btnSearch").addEventListener("click",function(){
  if(!q){out.innerHTML="<div class='small'>Type a brand or line first.</div>";return}
  var lines={},order=[];
  DATA.forEach(function(c){var s=norm(c.brand+" "+(c.line||"")); if(s.indexOf(q)>=0){var k=norm(c.brand)+"||"+norm(c.line); if(!lines[k]){lines[k]={brand:c.brand,line:c.line};order.push(k)}}});
- if(!order.length){out.innerHTML="<div class='small'><b>Not found.</b> No priced line in the catalogue matches that search. Check the spelling on the band and try again.</div>";return}
+ if(!order.length){reportMiss("search","",q,"","");out.innerHTML="<div class='small'><b>Not found.</b> No priced line in the catalogue matches that search. Check the spelling on the band and try again.</div>";return}
  order.slice(0,12).forEach(function(k){var L=lines[k];var b=document.createElement("button");b.className="secondary";b.textContent=L.brand+(L.line?" — "+L.line:"");b.addEventListener("click",function(){pickLine(L)});out.appendChild(b)});
 });
 /* ---- Verdict focus (owner field note, Nov 6): when an answer renders,
@@ -268,7 +268,7 @@ function pickLine(L){
  clearResultCards("vitolaCard");
  var entries=linePickerEntries(L);
  var card=document.getElementById("vitolaCard"); card.style.display="block"; var el=document.getElementById("vitolaList"); el.innerHTML="";
- if(!entries.length){el.innerHTML="<div class='small'>No priced cigar is recorded for this line yet.</div>"}
+ if(!entries.length){reportMiss("picker",L.brand,L.line,"","");el.innerHTML="<div class='small'>No priced cigar is recorded for this line yet.</div>"}
  entries.forEach(function(en){var b=document.createElement("button");b.className="secondary";b.textContent=en.label+(en.rec?"":" — no verified price");b.addEventListener("click",function(){showVerdict(L,en.vitola,en.rec)});el.appendChild(b)});
  card.scrollIntoView({behavior:"smooth"});
 }
@@ -284,6 +284,7 @@ function showVerdict(L,vitola,c){
   if(altV.length)c=altV[0];
  }
  if(!c||!c.trust_prices||!c.trust_prices.length){
+   reportMiss("verdict",L.brand,L.line,vitola,"");
    var nf="<div class='name'>"+esc(L.brand)+" "+esc(L.line||"")+" — "+esc(vitola)+"</div><div class='meta'>Verdict</div><p><b>Not found</b> — no verified price for this exact cigar at a trust-cleared retailer. We never guess a verdict.</p>";
    /* No price is not a dead end: when the catalogue knows the cigar
       itself, the card still gives the smoker the cigar — size, strength,
@@ -366,6 +367,7 @@ function resolveCode(rawCode,how){
    }
  }
  if(entry){
+   reportMiss("barcode",entry.db_brand,entry.db_line,"",hitCode);
    showScanCard(entry.name,"UPC "+hitCode+" · in the catalogue",
      "known","✓ In the catalogue",
      "That exact vitola has no verified price at a trust-cleared retailer yet, so there is no verdict to show — we never guess one. The line's other vitolas are one tap away.",
@@ -374,6 +376,7 @@ function resolveCode(rawCode,how){
    setStatus("<b>Matched.</b> "+esc(entry.name)+".");
    return;
  }
+ reportMiss("barcode","","","",code);
  showScanCard("Code read: "+code,
    (chk===true?"Valid barcode (check digit OK)":(chk===false?"Barcode read, but the check digit fails — likely a glare misread. Try again.":"Barcode read"))+" · not in the catalogue yet",
    "known","Not in the catalogue yet",
@@ -586,6 +589,7 @@ function renderBandCandidate(){
  showBandCard();
 }
 function renderBandNoMatch(){
+ reportMiss("band","",bandText,"","");
  $("bName").textContent="We couldn't place that band";
  $("bMeta").textContent="No catalogue match from that photo.";
  $("bPill").style.display="none";
@@ -716,6 +720,18 @@ function finishBandPooled(texts){
  }
 }
 var VISION_ENDPOINT="https://trustedcigar-band-vision.tomas-gregorio.workers.dev/identify";
+/* Missed-scan catcher (owner order, Nov 8, 2026): every terminal miss —
+   a verdict with no price, a band that won't place, a barcode we don't
+   hold, an empty search — is reported to the vision Worker's /miss
+   route with names only (never a photo, never anything about the
+   person), so the misses can be worked in the background: matcher
+   fixes, price hunts, catalogue adds. Fire-and-forget: a failed
+   report changes nothing for the smoker. */
+function reportMiss(mode,brand,line,vitola,code){
+ try{
+  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:String(brand||"").slice(0,80),line:String(line||"").slice(0,120),vitola:String(vitola||"").slice(0,60),code:String(code||"").slice(0,24),mode:mode,build:"2026-11-08.12"})}).catch(function(){});
+ }catch(e){}
+}
 function visClean(s){return String(s||"").replace(/\([^)]*\)/g," ").replace(/\s+/g," ").trim()}
 function visBrandVariants(s){
  var raw=String(s||""),out=[],outer=norm(visClean(raw));
