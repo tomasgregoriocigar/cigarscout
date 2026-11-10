@@ -45,7 +45,7 @@
 
 <div class="wrap" style="margin-top:10px">
   <div class="card">
-    <p class="ev" style="margin:0"><b>Found-it alerts.</b> When we price a cigar you scanned, your home screen icon gets a number badge and you get one notification. Nothing else, ever.</p>
+    <p class="ev" style="margin:0"><b>Found-it alerts.</b> When we price a cigar you scanned, a dot appears on your home screen icon and you get one notification. Nothing else, ever.</p>
     <button id="appAlertsBtn" type="button" style="margin-top:10px;width:100%;background:#fff;color:#2b1d10;border:2px solid #d8a94e;border-radius:12px;padding:12px;font-size:16px;font-weight:700;cursor:pointer">Turn on found-it alerts</button>
     <p class="ev" id="appAlertsMsg" style="margin:6px 0 0"></p>
   </div>
@@ -200,7 +200,7 @@ if("serviceWorker" in navigator){
   try{
    if(!("setAppBadge" in navigator))return;
    var n=0; histLoad().forEach(function(en){if(en.found&&!en.seen)n++});
-   if(n>0){var p=navigator.setAppBadge(n); if(p&&p.catch)p.catch(function(){})}
+   if(n>0){var p=navigator.setAppBadge(); if(p&&p.catch)p.catch(function(){})}
    else if(navigator.clearAppBadge){var q=navigator.clearAppBadge(); if(q&&q.catch)q.catch(function(){})}
   }catch(e){}
  }
@@ -241,16 +241,16 @@ if("serviceWorker" in navigator){
    if(msg&&!standalone)msg.textContent="Found-it alerts live on the home screen app. Open TrustedCigar from your home screen icon and turn alerts on here.";
    return;
   }
-  if(Notification.permission==="granted"){btn.textContent="Found-it alerts are on";btn.disabled=true;if(msg)msg.textContent="When we price a cigar you scanned, your icon gets a number badge and one notification."}
+  if(Notification.permission==="granted"){btn.textContent="Found-it alerts are on";btn.disabled=true;if(msg)msg.textContent="When we price a cigar you scanned, a dot appears on your icon and you get one notification."}
   else if(Notification.permission==="denied"){btn.textContent="Alerts are off in Settings";btn.disabled=true;if(msg)msg.textContent="Notifications for TrustedCigar are off. You can turn them on in Settings, under Notifications."}
-  else{btn.textContent="Turn on found-it alerts";btn.disabled=false;if(msg)msg.textContent="One badge and one notification when we price a cigar you scanned. That is the only time we ever send one."}
+  else{btn.textContent="Turn on found-it alerts";btn.disabled=false;if(msg)msg.textContent="One dot and one notification when we price a cigar you scanned. That is the only time we ever send one."}
  }
  var btn=document.getElementById("appAlertsBtn");
  if(btn)btn.addEventListener("click",function(){
   var msg=document.getElementById("appAlertsMsg");
   if(!memberEmail()){if(msg)msg.textContent="Add your email below first, so we know which finds are yours.";return}
   Notification.requestPermission().then(function(p){
-   if(p==="granted"){pushSubscribe();if(msg)msg.textContent="Alerts on. The next cigar we price for you puts a badge on your icon."}
+   if(p==="granted"){pushSubscribe();if(msg)msg.textContent="Alerts on. The next cigar we price for you puts a dot on your icon."}
    ui();
   }).catch(function(){ui()});
  });
