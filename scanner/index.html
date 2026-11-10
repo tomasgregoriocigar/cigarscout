@@ -132,8 +132,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-09.2 -->
-<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-09.2</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-09.3 -->
+<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-09.3</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -733,7 +733,7 @@ function reportMiss(mode,brand,line,vitola,code){
  try{
   window.__tcLastMiss={mode:mode,brand:String(brand||"").slice(0,80),line:String(line||"").slice(0,120),vitola:String(vitola||"").slice(0,60),code:String(code||"").slice(0,24)};
   var member=""; try{member=localStorage.getItem("tc_member_email")||""}catch(e){}
-  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-09.2"})}).catch(function(){});
+  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-09.3"})}).catch(function(){});
   setTimeout(maybeMissPrompt,400);
  }catch(e){}
 }
@@ -769,7 +769,7 @@ function missPromptSubmit(){
   try{localStorage.setItem("tc_member_email",email);localStorage.setItem("tc_subscribed","1")}catch(e){}
   var lm=window.__tcLastMiss;
   if(lm){
-   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-09.2"})}).catch(function(){});
+   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-09.3"})}).catch(function(){});
   }
   var body=document.getElementById("missPromptBody");
   if(body)body.innerHTML="<div style='font-weight:700;font-size:19px;margin-bottom:8px'>You're in.</div><div class='small' style='font-size:15px;line-height:1.5'>We will email you the price as soon as we find it. It will be in your History box too.</div><div style='margin-top:14px'><button class='btn' type='button' onclick='missPromptClose()'>Done</button></div>";
@@ -1125,7 +1125,7 @@ function tcRenderHistory(){
   else status="<div class='small'>"+pr+"</div>";
   return "<div class='histrow' data-i='"+i+"' style='display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #eee2c8;cursor:pointer'>"+
    (en.thumb?"<img src='"+en.thumb+"' alt='' style='width:44px;height:44px;object-fit:cover;border-radius:8px'>":"")+
-   "<div><div><b>"+nm+"</b>"+(en.vitola?" — "+esc(en.vitola):"")+"</div>"+
+   "<div><div><b>"+nm+"</b>"+(en.vitola?" — "+esc(en.vitola):"")+(en.found?" <span title='Found since your scan' style='display:inline-block;background:#2e7d32;color:#fff;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;font-size:12px;vertical-align:1px'>&#10003;</span>":"")+"</div>"+
    "<div class='small'>"+tcFmtDate(en.ts)+"</div>"+status+"</div></div>"}).join("");
  Array.prototype.forEach.call(el.querySelectorAll(".histrow"),function(row){row.addEventListener("click",function(){tcShowSnapshot(list[Number(row.getAttribute("data-i"))])})});
 }

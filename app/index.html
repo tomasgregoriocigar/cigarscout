@@ -175,7 +175,7 @@ if("serviceWorker" in navigator){
    var d=""; try{d=new Date(en.ts).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"})}catch(e){}
    return "<a href='/scanner/' style='text-decoration:none;color:inherit'><div class='card' style='display:flex;gap:10px;align-items:center'>"+
     (en.thumb?"<img src='"+en.thumb+"' alt='' style='width:44px;height:44px;object-fit:cover;border-radius:8px'>":"")+
-    "<div><h3 style='margin:0'>"+es(en.brand)+" "+es(en.line||"")+(en.vitola?" — "+es(en.vitola):"")+"</h3>"+
+    "<div><h3 style='margin:0'>"+es(en.brand)+" "+es(en.line||"")+(en.vitola?" — "+es(en.vitola):"")+(en.found?" <span title='Found since your scan' style='display:inline-block;background:#2e7d32;color:#fff;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;font-size:12px;vertical-align:1px'>&#10003;</span>":"")+"</h3>"+
     "<p class='ev' style='margin:4px 0 0'>"+d+"</p><p class='ev' style='margin:2px 0 0'>"+pr+"</p></div></div></a>"}).join("")+
    "<p class='sub' style='margin-top:8px'>Tap a scan to reopen it in the scanner. Free history holds your last 5 on this phone; members keep every scan, unlimited.</p>";
  }
