@@ -132,7 +132,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-08.13</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-09.1</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -730,9 +730,50 @@ var VISION_ENDPOINT="https://trustedcigar-band-vision.tomas-gregorio.workers.dev
    report changes nothing for the smoker. */
 function reportMiss(mode,brand,line,vitola,code){
  try{
+  window.__tcLastMiss={mode:mode,brand:String(brand||"").slice(0,80),line:String(line||"").slice(0,120),vitola:String(vitola||"").slice(0,60),code:String(code||"").slice(0,24)};
   var member=""; try{member=localStorage.getItem("tc_member_email")||""}catch(e){}
-  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:String(brand||"").slice(0,80),line:String(line||"").slice(0,120),vitola:String(vitola||"").slice(0,60),code:String(code||"").slice(0,24),member:member,mode:mode,build:"2026-11-08.13"})}).catch(function(){});
+  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-09.1"})}).catch(function(){});
+  setTimeout(maybeMissPrompt,400);
  }catch(e){}
+}
+/* Miss follow-up prompt (owner order, Nov 9, 2026): when a scan misses,
+   tell the smoker the answer lands in their History box in the app, and
+   offer an email the moment the price is found. Shown once per session,
+   and never when we already hold their email. An email given here is
+   attached to this miss by re-reporting it with the member field set,
+   so the daily catcher can write back to this exact smoker. */
+function maybeMissPrompt(){
+ try{
+  if(localStorage.getItem("tc_member_email"))return;
+  if(sessionStorage.getItem("tc_miss_prompt_seen"))return;
+  var ov=document.getElementById("missPrompt");
+  if(!ov)return;
+  sessionStorage.setItem("tc_miss_prompt_seen","1");
+  ov.style.display="flex";
+ }catch(e){}
+}
+function missPromptClose(){
+ var ov=document.getElementById("missPrompt");
+ if(ov)ov.style.display="none";
+}
+function missPromptSubmit(){
+ var inp=document.getElementById("missEmail"),msg=document.getElementById("missMsg");
+ var email=((inp&&inp.value)||"").trim();
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){if(msg)msg.textContent="That email doesn't look right. Check it and try again.";return}
+ if(msg)msg.textContent="One moment...";
+ fetch(VISION_ENDPOINT.replace(/\/identify$/,"/subscribe"),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email})})
+ .then(function(r){return r.json()})
+ .then(function(j){
+  if(!(j&&j.ok)){if(msg)msg.textContent="That didn't take. Try once more in a moment.";return}
+  try{localStorage.setItem("tc_member_email",email);localStorage.setItem("tc_subscribed","1")}catch(e){}
+  var lm=window.__tcLastMiss;
+  if(lm){
+   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-09.1"})}).catch(function(){});
+  }
+  var body=document.getElementById("missPromptBody");
+  if(body)body.innerHTML="<div style='font-weight:700;font-size:19px;margin-bottom:8px'>You're in.</div><div class='small' style='font-size:15px;line-height:1.5'>We will email you the price as soon as we find it. It will also be waiting in your History box in this app.</div><div style='margin-top:14px'><button class='btn' type='button' onclick='missPromptClose()'>Done</button></div>";
+ })
+ .catch(function(){if(msg)msg.textContent="That didn't take. Try once more in a moment."});
 }
 function visClean(s){return String(s||"").replace(/\([^)]*\)/g," ").replace(/\s+/g," ").trim()}
 function visBrandVariants(s){
@@ -1134,4 +1175,14 @@ function tcShowSnapshot(en){
 })();
 </script>
 <div style="position:fixed;left:0;right:0;bottom:0;z-index:70;background:rgba(23,19,16,.94);border-top:1px solid #3a322a;padding:10px 16px calc(10px + env(safe-area-inset-bottom));text-align:center"><a href="/app/" style="display:inline-block;color:#ffe1a1;background:#2b241d;text-decoration:none;font-weight:700;font-size:16px;border:1px solid #d8a94e;border-radius:999px;padding:11px 34px;box-shadow:0 4px 14px rgba(0,0,0,.45)">&#8249; Home</a></div>
+<div id="missPrompt" style="display:none;position:fixed;inset:0;z-index:90;background:rgba(10,7,5,.72);align-items:center;justify-content:center;padding:18px">
+<div id="missPromptBody" style="background:#241a12;border:1px solid #d8a94e;border-radius:14px;max-width:420px;width:100%;padding:20px;color:#f5ead9;box-shadow:0 10px 34px rgba(0,0,0,.55)">
+<div style="font-weight:700;font-size:19px;margin-bottom:8px">We're hunting this one down</div>
+<div class="small" style="font-size:15px;line-height:1.5">This cigar is not priced in our catalogue yet. Our team will hunt down the price, and the answer will be waiting in your History box in this app. Want it the moment we find it? Leave your email and we will email you the price as soon as it lands.</div>
+<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><input id="missEmail" type="email" placeholder="you@email.com" style="flex:1;min-width:180px;padding:10px;border-radius:8px;border:1px solid #6b543a;background:#1a120b;color:#f5ead9"><button class="btn" type="button" onclick="missPromptSubmit()">Email me the price</button></div>
+<div id="missMsg" style="margin-top:6px"></div>
+<div class="small" style="margin-top:10px">One email, when we find it. Joining also unlocks 5 more scans today.</div>
+<div style="margin-top:10px"><button class="secondary" type="button" onclick="missPromptClose()">No thanks</button></div>
+</div>
+</div>
 </body></html>
