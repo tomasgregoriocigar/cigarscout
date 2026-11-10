@@ -40,7 +40,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 </style></head><body>
 <div style="position:sticky;top:calc(4px + env(safe-area-inset-top));z-index:60;margin:0 0 10px"><a href="/app/" style="display:inline-block;color:#ffe1a1;background:#2b241d;text-decoration:none;font-weight:700;border:1px solid #d8a94e;border-radius:999px;padding:8px 18px;box-shadow:0 4px 14px rgba(0,0,0,.45)">&#8249; Home</a></div>
 <header><h1><span class="dot"></span>TrustedCigar Scanner</h1>
-<div class="sub">Check a cigar before you buy it. Start with the band: photograph it and get the verdict — today's verified price per stick across retailers that meet the Standard (Neptune Cigar, Best Cigar Prices, Cigar Page, Smoke Inn) — read from the retailer's own page, never guessed. The band reaches far more cigars than the barcode does; most sticks carry no barcode we hold. Two bands on the stick? Photograph each one — every band adds evidence. Barcodes are read on your phone; a band photo is sent to our vision reader for the read and is never kept by us — a small copy stays on your phone only, for your own scan history. No account, no tracking. Stock status is shown only for paying partner retailers; there are none yet, so no stock status appears. A cigar with no verified price reads “not found.”</div></header>
+<div class="sub">Check a cigar before you buy it. Start with the band: photograph it and get the verdict — today's verified price per stick across retailers that meet the Standard (Neptune Cigar, Best Cigar Prices, Cigar Page, Smoke Inn) — read from the retailer's own page, never guessed. Two bands on the stick? Photograph each one — every band adds evidence. A band photo is sent to our vision reader for the read and is never kept by us — a small copy stays on your phone only, for your own scan history. No account. We count successful scans in aggregate, no name attached, to learn which cigars smokers reach for and price those first. Stock status is shown only for paying partner retailers; there are none yet, so no stock status appears. A cigar with no verified price reads “not found.”</div></header>
 
 <div id="scanAgainBar" style="display:none"><button id="btnScanAgain">Scan another cigar</button></div>
 <div class="card" id="histCard">
@@ -65,32 +65,12 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 </div>
 <div id="scanEfforts">
 <div class="card hero"><div style="font-weight:700">Step 1 — Scan or upload the band</div>
-<div class="small">The band names the cigar, and it reaches far more of the catalogue than a barcode — most sticks have no barcode we hold. On a phone, photograph it; on a computer, upload a picture of it — same read either way. Straight-on, fill the frame, mind the glare. <b>Two bands on the stick? Photograph each one</b> — after the first read you'll get the chance to add the other, and the reads combine.</div>
+<div class="small">The band names the cigar. On a phone, photograph it; on a computer, upload a picture of it — same read either way. Straight-on, fill the frame, mind the glare. <b>Two bands on the stick? Photograph each one</b> — after the first read you'll get the chance to add the other, and the reads combine.</div>
 <button id="btnBand">Take a photo of the band</button>
 <div class="row"><button id="btnBandUpload" class="secondary">Upload a band photo</button></div>
 <input id="bandInput" type="file" accept="image/*" capture="environment" style="display:none">
 <input id="bandUploadInput" type="file" accept="image/*" style="display:none">
-</div>
-
-<div class="card"><div style="font-weight:700">Or scan the barcode</div>
-<div id="reader"></div>
-<button id="btnStart">Start camera scan</button>
-<div class="row">
-<button id="btnPhoto" class="secondary">Photograph the barcode</button>
-<button id="btnPhotoUpload" class="secondary">Upload a barcode photo</button>
-</div>
-<div class="row">
-<button id="btnTorch" class="secondary" disabled>Torch</button>
-</div>
-<input id="photoInput" type="file" accept="image/*" capture="environment" style="display:none">
-<input id="photoUploadInput" type="file" accept="image/*" style="display:none">
-<div class="status" id="status">Camera is off. Tap <b>Start camera scan</b> and allow camera access.</div>
-</div>
-
-<div class="card"><div style="font-weight:700">No barcode handy?</div>
-<div class="small">Type a UPC from any cigar box or cello sticker:</div>
-<input type="text" id="manual" inputmode="numeric" autocomplete="off" placeholder="e.g. 071610511231">
-<button id="btnManual" class="secondary">Look it up</button>
+<div class="status" id="status">Photograph the band to start.</div>
 </div>
 
 <div class="card"><div style="font-weight:700">Or type the band (brand + line)</div>
@@ -137,8 +117,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-09.5 -->
-<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-09.5</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-10.1 -->
+<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-10.1</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -279,7 +259,18 @@ function pickLine(L){
  entries.forEach(function(en){var b=document.createElement("button");b.className="secondary";b.textContent=en.label+(en.rec?"":" — no verified price");b.addEventListener("click",function(){showVerdict(L,en.vitola,en.rec)});el.appendChild(b)});
  card.scrollIntoView({behavior:"smooth"});
 }
+function tcPingHit(brand,line,vitola,priced){
+ /* Successful-scan counter (Nov 10, 2026): anonymous, aggregate only.
+    Names the cigar and whether the verdict carried a price. No member,
+    no device, no address beyond the connection itself. The Worker keeps
+    daily counts; the daily catcher report reads them back so the true
+    scan-weighted priced rate replaces the catalogue-wide proxy. */
+ try{
+  fetch("https://trustedcigar-band-vision.tomas-gregorio.workers.dev/hit",{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:brand||"",line:line||"",vitola:vitola||"",priced:!!priced})}).catch(function(){});
+ }catch(e){}
+}
 function showVerdict(L,vitola,c){
+ var _pingOk=!window.__tcNoPing;window.__tcNoPing=false;
  collapseToVerdict();
  var v=document.getElementById("verdict"); v.style.display="block";
  /* Same vitola-in-line recovery at the verdict layer: never render Not
@@ -300,6 +291,7 @@ function showVerdict(L,vitola,c){
     var bits=[c.length_in?c.length_in+" in":"",c.ring_gauge?"× "+c.ring_gauge+" ring":"",c.strength?("Strength: "+c.strength):"",c.wrapper?("Wrapper: "+c.wrapper):"",c.origin?("Origin: "+c.origin):"",c.rating?("Rating "+c.rating+(c.rating_source?" ("+c.rating_source+")":"")):""].filter(Boolean).join(" · ");
     nf+="<div class='meta'>About this cigar</div>"+(bits?"<p class='small'>"+esc(bits)+"</p>":"")+(c.notes?"<p class='small'>Tasting notes: "+esc(c.notes)+"</p>":"")+(c.profile_source?"<p class='small'>Profile: "+esc(c.profile_source)+"</p>":"");
    }
+   if(_pingOk&&c&&(c.strength||c.wrapper||c.origin||c.notes||c.rating||c.length_in||c.ring_gauge))tcPingHit(L.brand,L.line,vitola,false);
    v.innerHTML=nf; v.scrollIntoView({behavior:"smooth"}); return;
  }
  var prices=c.trust_prices; var lo=prices[0].per_stick, hi=prices[prices.length-1].per_stick;
@@ -312,6 +304,7 @@ function showVerdict(L,vitola,c){
  "<table><tr><th>Retailer</th><th>Per-stick</th><th>Freshness</th></tr>"+rows+"</table>"+
  "<p class='small'>Stock status is not displayed — it is shown only for paying partner retailers, and there are none yet.</p>";
  v.scrollIntoView({behavior:"smooth"});
+ if(_pingOk)tcPingHit(c.brand,c.line,c.vitola||vitola,true);
  tcRecordHistory(c,vitola);
 }
 
@@ -422,59 +415,7 @@ function onDecode(text){
  resolveCode(code,"Camera");
  setTimeout(function(){if(scanning)firstReadPending=true},1200); // re-arm for the next stick
 }
-$("btnStart").addEventListener("click",function(){
- if(scanning){
-  scanner.stop().then(function(){scanning=false;$("btnStart").textContent="Start camera scan";
-   $("btnTorch").disabled=true;setStatus("Camera stopped.");}).catch(function(){});
-  return;
- }
- loadLib(function(){
-  if(!scanner)makeScanner();
-  setStatus("Starting camera… if a permission prompt appears, tap <b>Allow</b>.");
-  startStamp=performance.now();firstReadPending=true;lastCode="";lastCodeAt=0;
-  scanner.start({facingMode:"environment"},
-   {fps:12,qrbox:{width:280,height:170},aspectRatio:1.3333},
-   onDecode,function(){})
-  .then(function(){scanning=true;$("btnStart").textContent="Stop camera";
-   $("btnTorch").disabled=false;
-   setStatus("Camera live. Hold the barcode steady, 4–8 inches away.");})
-  .catch(function(err){firstReadPending=false;
-   setStatus("<b>Camera wouldn't start.</b> If you denied permission, allow it in Settings › Safari › Camera, then try again. You can also use <b>Photograph the barcode</b> or <b>Photograph the band</b>. ("+String(err).slice(0,120)+")");});
- });
-});
-$("btnTorch").addEventListener("click",function(){
- if(!scanner||!scanning)return;
- torchOn=!torchOn;
- try{
-  scanner.applyVideoConstraints({advanced:[{torch:torchOn}]})
-   .then(function(){setStatus(torchOn?"Torch on.":"Torch off.")})
-   .catch(function(){setStatus("This phone/browser doesn't expose a torch to web pages — that's one of the known iPhone web limits. Photo mode with flash is the fallback.");torchOn=false});
- }catch(e){setStatus("Torch isn't available to web pages on this phone — known iPhone web limit. Photo mode is the fallback.");}
-});
-$("btnPhoto").addEventListener("click",function(){$("photoInput").click()});
-$("btnPhotoUpload").addEventListener("click",function(){$("photoUploadInput").click()});
-function onBarcodePhoto(ev){
- var f=ev.target.files&&ev.target.files[0];if(!f)return;
- loadLib(function(){
-  if(!scanner)makeScanner();
-  setStatus("Reading the photo…");
-  scanner.scanFile(f,false).then(function(text){
-   resolveCode(text,"Photo");
-   setStatus("<b>Photo read.</b>");
-  }).catch(function(){
-   setStatus("<b>No barcode found in that photo.</b> Get closer, fill the frame with the sticker, and avoid glare, then try again.");
-  });
- });
- ev.target.value="";
-}
-$("photoInput").addEventListener("change",onBarcodePhoto);
-$("photoUploadInput").addEventListener("change",onBarcodePhoto);
-$("btnManual").addEventListener("click",function(){
- var code=$("manual").value.replace(/\D/g,"");
- if(!code){setStatus("Type a UPC first.");return}
- resolveCode(code,"Typed");
-});
-
+/* Barcode camera removed Nov 10, 2026 (build 2026-11-10.1): the catalogue holds 17 UPCs, so the barcode path could only ever miss. Band photo is the scanner. */
 /* ---- Photograph the band: on-device OCR of the band lettering, matched
    against the full catalogue's line names. The Oct 27 rule stands — a
    cigar is a candidate only on real name evidence, never a guess — and
@@ -600,7 +541,7 @@ function renderBandNoMatch(){
  $("bName").textContent="We couldn't place that band";
  $("bMeta").textContent="No catalogue match from that photo.";
  $("bPill").style.display="none";
- $("bLines").innerHTML="A straight-on shot that fills the frame with the band, out of direct glare, reads best. If the cigar has a barcode, that read is exact."+
+ $("bLines").innerHTML="A straight-on shot that fills the frame with the band, out of direct glare, reads best."+
   "<div style='margin-top:8px'>You can also type the brand or line in the search on this page — the verdict is the same.</div>";
  $("bBtns").style.display="none";
  $("bMoreRow").style.display="block";
@@ -645,7 +586,7 @@ function renderBandError(html){
  $("bName").textContent="The band reader didn't run";
  $("bMeta").textContent="";
  $("bPill").style.display="none";
- $("bLines").innerHTML=html+" You can still scan the barcode, type the UPC, or type the band in the search on this page.";
+ $("bLines").innerHTML=html+" You can still type the band in the search on this page.";
  $("bBtns").style.display="none";
  showBandCard();
 }
@@ -738,7 +679,7 @@ function reportMiss(mode,brand,line,vitola,code){
  try{
   window.__tcLastMiss={mode:mode,brand:String(brand||"").slice(0,80),line:String(line||"").slice(0,120),vitola:String(vitola||"").slice(0,60),code:String(code||"").slice(0,24)};
   var member=""; try{member=localStorage.getItem("tc_member_email")||""}catch(e){}
-  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-09.5"})}).catch(function(){});
+  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-10.1"})}).catch(function(){});
   setTimeout(maybeMissPrompt,400);
  }catch(e){}
 }
@@ -774,7 +715,7 @@ function missPromptSubmit(){
   try{localStorage.setItem("tc_member_email",email);localStorage.setItem("tc_subscribed","1")}catch(e){}
   var lm=window.__tcLastMiss;
   if(lm){
-   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-09.5"})}).catch(function(){});
+   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-10.1"})}).catch(function(){});
   }
   var body=document.getElementById("missPromptBody");
   if(body)body.innerHTML="<div style='font-weight:700;font-size:19px;margin-bottom:8px'>You're in.</div><div class='small' style='font-size:15px;line-height:1.5'>We will email you the price as soon as we find it. It will be in your History box too.</div><div style='margin-top:14px'><button class='btn' type='button' onclick='missPromptClose()'>Done</button></div>";
@@ -940,7 +881,7 @@ $("btnScanAgain").addEventListener("click",function(){
  ["verdict","vitolaCard","scanCard","bandCard"].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display="none";});
  document.getElementById("lineResults").innerHTML="";
  var e=document.getElementById("scanEfforts"); if(e)e.style.display="block";
- setStatus("Catalogue loaded — <b>"+DATA.length.toLocaleString()+" priced cigars</b>. Point the camera at the barcode on the cigar's cellophane or box.");
+ setStatus("Catalogue loaded — <b>"+DATA.length.toLocaleString()+" priced cigars</b>. Photograph the band, or type its name in the search.");
  window.scrollTo({top:0,behavior:"smooth"});
 });
 </script><!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1a0436df2f214d81b4258178c56bba9b"}'></script><!-- End Cloudflare Web Analytics -->
@@ -1134,7 +1075,7 @@ function tcRenderHistory(){
    "<div class='small'>"+tcFmtDate(en.ts)+"</div>"+status+"</div></div>"}).join("");
  Array.prototype.forEach.call(el.querySelectorAll(".histrow"),function(row){row.addEventListener("click",function(){tcShowSnapshot(list[Number(row.getAttribute("data-i"))])})});
 }
-/* Icon badge + found-it alerts (build 2026-11-09.5). Platform facts: iOS
+/* Icon badge + found-it alerts (build 2026-11-10.1). Platform facts: iOS
    draws a badge only on the installed home-screen app, only after the
    member allows notifications, and the badge is a number or a dot, never
    a custom glyph. While the app is closed the badge can move only inside
@@ -1223,7 +1164,7 @@ function tcShowSnapshot(en){
  document.getElementById("btnHistNow").addEventListener("click",function(){
   var rec=null;
   for(var i=0;i<DATA.length;i++){var c=DATA[i]; if(norm(c.brand)===norm(en.brand)&&norm(c.line)===norm(en.line)&&norm(c.vitola||"")===norm(en.vitola||"")){rec=c;break}}
-  if(rec){showVerdict({brand:en.brand,line:en.line},en.vitola,rec)} else {pickLine({brand:en.brand,line:en.line})}
+  if(rec){window.__tcNoPing=true;showVerdict({brand:en.brand,line:en.line},en.vitola,rec)} else {pickLine({brand:en.brand,line:en.line})}
  });
 }
 (function(){
