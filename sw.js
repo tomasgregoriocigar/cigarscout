@@ -1,4 +1,4 @@
-/* TrustedCigar service worker — build 2026-11-08.3
+/* TrustedCigar service worker — build 2026-11-09.4
    Owner rule (Tomás, Nov 8, 2026): the home-screen shortcut must always
    be up to date — an installed shortcut that serves a stale build is a
    product defect. So the app shell is NETWORK-FIRST here: while online,
@@ -8,7 +8,7 @@
    deletes every older cache, evicting stale shells from installed
    phones. Cross-origin and non-GET requests are left to the browser
    untouched (analytics beacon, vision reader, OCR CDN). */
-var CACHE = "tc-2026-11-08-3";
+var CACHE = "tc-2026-11-09-4";
 var SHELL = [
   "/",
   "/app/",
@@ -77,4 +77,46 @@ self.addEventListener("fetch", function (event) {
 
   /* All other pages and assets: network-first, cache as fallback. */
   networkFirst(event, false);
+});
+
+/* Found-it alerts (build 2026-11-09.4). Apple's rule: every push MUST
+   show a notification, or WebKit revokes the subscription — so the push
+   handler always shows one (generic text if the payload is unreadable)
+   and sets the icon badge alongside it. */
+self.addEventListener("push", function (event) {
+  var data = { title: "TrustedCigar", body: "Good news. Open the app to see what we found.", url: "/app/", badge: 1 };
+  try {
+    var j = event.data ? event.data.json() : null;
+    if (j) {
+      if (j.title) data.title = String(j.title);
+      if (j.body) data.body = String(j.body);
+      if (j.url) data.url = String(j.url);
+      if (typeof j.badge === "number") data.badge = j.badge;
+    }
+  } catch (e) { /* keep the generic notification */ }
+  var tasks = [
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icon-192.png",
+      data: { url: data.url }
+    })
+  ];
+  if (self.navigator && self.navigator.setAppBadge) {
+    tasks.push(data.badge > 0 ? self.navigator.setAppBadge(data.badge) : self.navigator.clearAppBadge());
+  }
+  event.waitUntil(Promise.all(tasks));
+});
+
+self.addEventListener("notificationclick", function (event) {
+  event.notification.close();
+  var url = (event.notification.data && event.notification.data.url) || "/app/";
+  var tasks = [];
+  if (self.navigator && self.navigator.clearAppBadge) tasks.push(self.navigator.clearAppBadge());
+  tasks.push(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].url.indexOf(url) !== -1 && "focus" in list[i]) return list[i].focus();
+    }
+    if (self.clients.openWindow) return self.clients.openWindow(url);
+  }));
+  event.waitUntil(Promise.all(tasks));
 });

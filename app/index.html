@@ -43,6 +43,14 @@
   <div id="appHistBody" style="display:none;margin-top:10px"></div>
 </div>
 
+<div class="wrap" style="margin-top:10px">
+  <div class="card">
+    <p class="ev" style="margin:0"><b>Found-it alerts.</b> When we price a cigar you scanned, your home screen icon gets a number badge and you get one notification. Nothing else, ever.</p>
+    <button id="appAlertsBtn" type="button" style="margin-top:10px;width:100%;background:#fff;color:#2b1d10;border:2px solid #d8a94e;border-radius:12px;padding:12px;font-size:16px;font-weight:700;cursor:pointer">Turn on found-it alerts</button>
+    <p class="ev" id="appAlertsMsg" style="margin:6px 0 0"></p>
+  </div>
+</div>
+
 <header class="site">
   <div class="wrap">
     <div class="brand">
@@ -175,11 +183,80 @@ if("serviceWorker" in navigator){
    var d=""; try{d=new Date(en.ts).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"})}catch(e){}
    return "<a href='/scanner/' style='text-decoration:none;color:inherit'><div class='card' style='display:flex;gap:10px;align-items:center'>"+
     (en.thumb?"<img src='"+en.thumb+"' alt='' style='width:44px;height:44px;object-fit:cover;border-radius:8px'>":"")+
-    "<div><h3 style='margin:0'>"+es(en.brand)+" "+es(en.line||"")+(en.vitola?" — "+es(en.vitola):"")+(en.found?" <span title='Found since your scan' style='display:inline-block;background:#2e7d32;color:#fff;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;font-size:12px;vertical-align:1px'>&#10003;</span>":"")+"</h3>"+
+    "<div><h3 style='margin:0'>"+es(en.brand)+" "+es(en.line||"")+(en.vitola?" — "+es(en.vitola):"")+"</h3>"+
     "<p class='ev' style='margin:4px 0 0'>"+d+"</p><p class='ev' style='margin:2px 0 0'>"+pr+"</p></div></div></a>"}).join("")+
    "<p class='sub' style='margin-top:8px'>Tap a scan to reopen it in the scanner. Free history holds your last 5 on this phone; members keep every scan, unlimited.</p>";
  }
  btn.addEventListener("click",function(){var open=body.style.display!=="none";body.style.display=open?"none":"block";if(!open)render()});
+})();
+</script>
+<script>
+(function(){
+ var VAPID_PUBLIC="BNSrTmYJ_Sd4_NZ9V91O3T_qEaVHe_z2-IcSPx-cDtd6rUQFMEbHceOxvfuuHeRMPqNZwMxKv4J7TypyTZkRep8";
+ var WORKER="https://trustedcigar-band-vision.tomas-gregorio.workers.dev";
+ function histLoad(){try{return JSON.parse(localStorage.getItem("tc_history_v1")||"[]")}catch(e){return[]}}
+ function histStore(l){try{localStorage.setItem("tc_history_v1",JSON.stringify(l))}catch(e){}}
+ function badgeSync(){
+  try{
+   if(!("setAppBadge" in navigator))return;
+   var n=0; histLoad().forEach(function(en){if(en.found&&!en.seen)n++});
+   if(n>0){var p=navigator.setAppBadge(n); if(p&&p.catch)p.catch(function(){})}
+   else if(navigator.clearAppBadge){var q=navigator.clearAppBadge(); if(q&&q.catch)q.catch(function(){})}
+  }catch(e){}
+ }
+ function markSeen(){
+  var l=histLoad(),ch=false;
+  l.forEach(function(en){if(en.found&&!en.seen){en.seen=true;ch=true}});
+  if(ch)histStore(l);
+  badgeSync();
+ }
+ var hb=document.getElementById("appHistBtn");
+ if(hb)hb.addEventListener("click",function(){setTimeout(markSeen,50)});
+ function b64(s){s=String(s).replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";var bin=atob(s),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return arr}
+ function memberEmail(){
+  var em=""; try{em=localStorage.getItem("tc_member_email")||""}catch(e){}
+  if(!em){var inp=document.getElementById("tcAppEmail"); if(inp&&/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test((inp.value||"").trim()))em=inp.value.trim()}
+  return em;
+ }
+ function pushSubscribe(){
+  var email=memberEmail();
+  if(!email)return Promise.resolve(false);
+  try{localStorage.setItem("tc_member_email",email)}catch(e){}
+  if(!("serviceWorker" in navigator)||!("PushManager" in window))return Promise.resolve(false);
+  return navigator.serviceWorker.ready.then(function(reg){
+   return reg.pushManager.getSubscription().then(function(sub){
+    if(sub)return sub;
+    return reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(VAPID_PUBLIC)});
+   });
+  }).then(function(sub){
+   try{localStorage.setItem("tc_push_sub",JSON.stringify(sub))}catch(e){}
+   return fetch(WORKER+"/subscribe-push",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({member:email,subscription:sub})}).then(function(r){if(r.ok){try{localStorage.removeItem("tc_push_sub")}catch(e){}} return r.ok}).catch(function(){return false});
+  }).catch(function(){return false});
+ }
+ function ui(){
+  var btn=document.getElementById("appAlertsBtn"),msg=document.getElementById("appAlertsMsg"); if(!btn)return;
+  var standalone=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true;
+  if(!("Notification" in window)||!("setAppBadge" in navigator)){
+   btn.style.display="none";
+   if(msg&&!standalone)msg.textContent="Found-it alerts live on the home screen app. Open TrustedCigar from your home screen icon and turn alerts on here.";
+   return;
+  }
+  if(Notification.permission==="granted"){btn.textContent="Found-it alerts are on";btn.disabled=true;if(msg)msg.textContent="When we price a cigar you scanned, your icon gets a number badge and one notification."}
+  else if(Notification.permission==="denied"){btn.textContent="Alerts are off in Settings";btn.disabled=true;if(msg)msg.textContent="Notifications for TrustedCigar are off. You can turn them on in Settings, under Notifications."}
+  else{btn.textContent="Turn on found-it alerts";btn.disabled=false;if(msg)msg.textContent="One badge and one notification when we price a cigar you scanned. That is the only time we ever send one."}
+ }
+ var btn=document.getElementById("appAlertsBtn");
+ if(btn)btn.addEventListener("click",function(){
+  var msg=document.getElementById("appAlertsMsg");
+  if(!memberEmail()){if(msg)msg.textContent="Add your email below first, so we know which finds are yours.";return}
+  Notification.requestPermission().then(function(p){
+   if(p==="granted"){pushSubscribe();if(msg)msg.textContent="Alerts on. The next cigar we price for you puts a badge on your icon."}
+   ui();
+  }).catch(function(){ui()});
+ });
+ ui();
+ try{if(localStorage.getItem("tc_push_sub")&&("Notification" in window)&&Notification.permission==="granted")pushSubscribe()}catch(e){}
+ badgeSync();
 })();
 </script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1a0436df2f214d81b4258178c56bba9b"}'></script><!-- End Cloudflare Web Analytics -->
