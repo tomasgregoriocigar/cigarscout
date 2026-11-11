@@ -169,7 +169,11 @@ function tcRenderAppCard(){
 })();
 if("serviceWorker" in navigator){
   window.addEventListener("load",function(){
-    navigator.serviceWorker.register("/sw.js").catch(function(){});
+    navigator.serviceWorker.register("/sw.js").then(function(reg){
+      var check=function(){ if(reg&&reg.update) reg.update().catch(function(){}); };
+      document.addEventListener("visibilitychange",function(){ if(!document.hidden) check(); });
+      window.addEventListener("pageshow",check);
+    }).catch(function(){});
   });
 }
 </script>

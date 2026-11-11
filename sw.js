@@ -1,4 +1,4 @@
-/* TrustedCigar service worker — build 2026-11-11.2
+/* TrustedCigar service worker — build 2026-11-11.3
    Owner rule (Tomás, Nov 8, 2026): the home-screen shortcut must always
    be up to date — an installed shortcut that serves a stale build is a
    product defect. So the app shell is NETWORK-FIRST here: while online,
@@ -8,7 +8,7 @@
    deletes every older cache, evicting stale shells from installed
    phones. Cross-origin and non-GET requests are left to the browser
    untouched (analytics beacon, vision reader, OCR CDN). */
-var CACHE = "tc-2026-11-11-2";
+var CACHE = "tc-2026-11-11-3";
 var SHELL = [
   "/",
   "/app/",
@@ -34,11 +34,24 @@ self.addEventListener("install", function (event) {
 self.addEventListener("activate", function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
+      var hadOld = keys.some(function (key) { return key !== CACHE; });
       return Promise.all(keys.map(function (key) {
         if (key !== CACHE) return caches.delete(key);
-      }));
-    }).then(function () {
-      return self.clients.claim();
+      })).then(function () { return hadOld; });
+    }).then(function (hadOld) {
+      return self.clients.claim().then(function () {
+        if (!hadOld || !self.clients.matchAll) return;
+        return self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+          return Promise.all(list.map(function (client) {
+            try {
+              var u = new URL(client.url);
+              if (u.origin === self.location.origin && (u.pathname === "/app/" || u.pathname === "/scanner/") && client.navigate) {
+                return client.navigate(client.url);
+              }
+            } catch (e) { /* leave that window alone */ }
+          }));
+        });
+      });
     })
   );
 });
@@ -79,7 +92,7 @@ self.addEventListener("fetch", function (event) {
   networkFirst(event, false);
 });
 
-/* Found-it alerts (build 2026-11-11.2). Apple's rule: every push MUST
+/* Found-it alerts (build 2026-11-11.3). Apple's rule: every push MUST
    show a notification, or WebKit revokes the subscription — so the push
    handler always shows one (generic text if the payload is unreadable)
    and sets the icon badge alongside it. */

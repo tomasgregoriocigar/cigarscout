@@ -118,8 +118,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-11.2 -->
-<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-11.2</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-11.3 -->
+<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-11.3</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -416,7 +416,7 @@ function onDecode(text){
  resolveCode(code,"Camera");
  setTimeout(function(){if(scanning)firstReadPending=true},1200); // re-arm for the next stick
 }
-/* Barcode camera removed Nov 10, 2026 (build 2026-11-11.2): the catalogue holds 17 UPCs, so the barcode path could only ever miss. Band photo is the scanner. */
+/* Barcode camera removed Nov 10, 2026 (build 2026-11-11.3): the catalogue holds 17 UPCs, so the barcode path could only ever miss. Band photo is the scanner. */
 /* ---- Photograph the band: on-device OCR of the band lettering, matched
    against the full catalogue's line names. The Oct 27 rule stands — a
    cigar is a candidate only on real name evidence, never a guess — and
@@ -680,7 +680,7 @@ function reportMiss(mode,brand,line,vitola,code){
  try{
   window.__tcLastMiss={mode:mode,brand:String(brand||"").slice(0,80),line:String(line||"").slice(0,120),vitola:String(vitola||"").slice(0,60),code:String(code||"").slice(0,24)};
   var member=""; try{member=localStorage.getItem("tc_member_email")||""}catch(e){}
-  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-11.2"})}).catch(function(){});
+  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-11.3"})}).catch(function(){});
   setTimeout(maybeMissPrompt,400);
  }catch(e){}
 }
@@ -716,7 +716,7 @@ function missPromptSubmit(){
   try{localStorage.setItem("tc_member_email",email);localStorage.setItem("tc_subscribed","1")}catch(e){}
   var lm=window.__tcLastMiss;
   if(lm){
-   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-11.2"})}).catch(function(){});
+   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-11.3"})}).catch(function(){});
   }
   var body=document.getElementById("missPromptBody");
   if(body)body.innerHTML="<div style='font-weight:700;font-size:19px;margin-bottom:8px'>You're in.</div><div class='small' style='font-size:15px;line-height:1.5'>We will email you the price as soon as we find it. It will be in your History box too.</div><div style='margin-top:14px'><button class='btn' type='button' onclick='missPromptClose()'>Done</button></div>";
@@ -892,7 +892,13 @@ $("btnScanAgain").addEventListener("click",function(){
 (function(){
  "use strict";
  if("serviceWorker" in navigator){
-   window.addEventListener("load",function(){ navigator.serviceWorker.register("/sw.js").catch(function(){}); });
+   window.addEventListener("load",function(){
+     navigator.serviceWorker.register("/sw.js").then(function(reg){
+       var check=function(){ if(reg&&reg.update) reg.update().catch(function(){}); };
+       document.addEventListener("visibilitychange",function(){ if(!document.hidden) check(); });
+       window.addEventListener("pageshow",check);
+     }).catch(function(){});
+   });
  }
  var standalone=false;
  try{ standalone=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true; }catch(e){}
@@ -1076,7 +1082,7 @@ function tcRenderHistory(){
    "<div class='small'>"+tcFmtDate(en.ts)+"</div>"+status+"</div></div>"}).join("");
  Array.prototype.forEach.call(el.querySelectorAll(".histrow"),function(row){row.addEventListener("click",function(){tcShowSnapshot(list[Number(row.getAttribute("data-i"))])})});
 }
-/* Icon badge + found-it alerts (build 2026-11-11.2). Platform facts: iOS
+/* Icon badge + found-it alerts (build 2026-11-11.3). Platform facts: iOS
    draws a badge only on the installed home-screen app, only after the
    member allows notifications, and the badge is a number or a dot, never
    a custom glyph. While the app is closed the badge can move only inside
