@@ -47,6 +47,10 @@
   <div class="card">
     <p class="ev" style="margin:0"><b>Found-it alerts.</b> When we price a cigar you scanned, a dot appears on your home screen icon and you get one notification. Nothing else, ever.</p>
     <button id="appAlertsBtn" type="button" style="margin-top:10px;width:100%;background:#fff;color:#2b1d10;border:2px solid #d8a94e;border-radius:12px;padding:12px;font-size:16px;font-weight:700;cursor:pointer">Turn on found-it alerts</button>
+    <div id="appAlertsEmailRow" style="display:none;margin-top:10px">
+      <input id="appAlertsEmail" type="email" placeholder="you@email.com" autocomplete="email" style="width:100%;box-sizing:border-box;padding:12px;border:2px solid #d8a94e;border-radius:12px;font-size:16px">
+      <button id="appAlertsSave" type="button" style="margin-top:8px;width:100%;background:#2b1d10;color:#fff;border:0;border-radius:12px;padding:12px;font-size:16px;font-weight:700;cursor:pointer">Save email and turn on alerts</button>
+    </div>
     <p class="ev" id="appAlertsMsg" style="margin:6px 0 0"></p>
   </div>
 </div>
@@ -247,14 +251,39 @@ if("serviceWorker" in navigator){
   else if(Notification.permission==="denied"){btn.textContent="Alerts are off in Settings";btn.disabled=true;if(msg)msg.textContent="Notifications for TrustedCigar are off. You can turn them on in Settings, under Notifications."}
   else{btn.textContent="Turn on found-it alerts";btn.disabled=false;if(msg)msg.textContent="One dot and one notification when we price a cigar you scanned. That is the only time we ever send one."}
  }
- var btn=document.getElementById("appAlertsBtn");
- if(btn)btn.addEventListener("click",function(){
+ function askEmail(){
+  var row=document.getElementById("appAlertsEmailRow"),inp=document.getElementById("appAlertsEmail"),msg=document.getElementById("appAlertsMsg");
+  if(msg)msg.textContent="Add your email first, so we know which finds are yours.";
+  if(row)row.style.display="block";
+  if(inp){try{inp.focus()}catch(e){}}
+ }
+ function turnOn(){
   var msg=document.getElementById("appAlertsMsg");
-  if(!memberEmail()){if(msg)msg.textContent="Add your email below first, so we know which finds are yours.";return}
-  Notification.requestPermission().then(function(p){
-   if(p==="granted"){pushSubscribe();if(msg)msg.textContent="Alerts on. The next cigar we price for you puts a dot on your icon."}
-   ui();
-  }).catch(function(){ui()});
+  if(!memberEmail()){askEmail();return}
+  if(!("Notification" in window)){if(msg)msg.textContent="Found-it alerts live on the home screen app. Open TrustedCigar from your home screen icon and turn alerts on here.";return}
+  var called=false;
+  var done=function(p){
+   if(called)return; called=true;
+   if(p==="granted"){
+    pushSubscribe().then(function(){ui();var m2=document.getElementById("appAlertsMsg");if(m2)m2.textContent="Found-it alerts are on. When we price a cigar you scanned, a dot appears on your icon and you get one notification."});
+   } else if(p==="denied"){ui()}
+   else{if(msg)msg.textContent="Alerts are not on yet. Tap the button when you are ready, and choose Allow."}
+  };
+  try{
+   var r=Notification.requestPermission(function(p){done(p)});
+   if(r&&typeof r.then==="function")r.then(function(p){done(p)}).catch(function(){done(Notification.permission)});
+  }catch(e){done(Notification.permission)}
+ }
+ var btn=document.getElementById("appAlertsBtn");
+ if(btn)btn.addEventListener("click",turnOn);
+ var saveBtn=document.getElementById("appAlertsSave");
+ if(saveBtn)saveBtn.addEventListener("click",function(){
+  var inp=document.getElementById("appAlertsEmail"),msg=document.getElementById("appAlertsMsg"),row=document.getElementById("appAlertsEmailRow");
+  var em=((inp&&inp.value)||"").trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){if(msg)msg.textContent="That email does not look complete. Check it and try again.";if(inp){try{inp.focus()}catch(e){}} return}
+  try{localStorage.setItem("tc_member_email",em)}catch(e){}
+  if(row)row.style.display="none";
+  turnOn();
  });
  ui();
  try{if(localStorage.getItem("tc_push_sub")&&("Notification" in window)&&Notification.permission==="granted")pushSubscribe()}catch(e){}

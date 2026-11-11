@@ -58,6 +58,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <div style="margin-top:10px;border-top:1px solid #e5d9c3;padding-top:10px">
 <div class="small"><b>Found-it alerts.</b> When we price a cigar you scanned, a dot appears on your home screen icon and you get one notification. Nothing else, ever.</div>
 <button id="btnAlerts" class="secondary" style="margin-top:8px">Turn on found-it alerts</button>
+ <div id="alertsEmailRow" style="display:none;margin-top:8px"><input id="alertsEmail" type="email" placeholder="you@email.com" autocomplete="email" style="width:100%;box-sizing:border-box;padding:10px;border:2px solid #d8a94e;border-radius:10px;font-size:16px"><button id="alertsSave" class="secondary" style="margin-top:6px;width:100%">Save email and turn on alerts</button></div>
 <div class="small" id="alertsMsg" style="margin-top:6px"></div>
 </div>
 </div>
@@ -117,8 +118,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-10.1 -->
-<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-10.1</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-11.2 -->
+<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-11.2</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -415,7 +416,7 @@ function onDecode(text){
  resolveCode(code,"Camera");
  setTimeout(function(){if(scanning)firstReadPending=true},1200); // re-arm for the next stick
 }
-/* Barcode camera removed Nov 10, 2026 (build 2026-11-10.1): the catalogue holds 17 UPCs, so the barcode path could only ever miss. Band photo is the scanner. */
+/* Barcode camera removed Nov 10, 2026 (build 2026-11-11.2): the catalogue holds 17 UPCs, so the barcode path could only ever miss. Band photo is the scanner. */
 /* ---- Photograph the band: on-device OCR of the band lettering, matched
    against the full catalogue's line names. The Oct 27 rule stands — a
    cigar is a candidate only on real name evidence, never a guess — and
@@ -679,7 +680,7 @@ function reportMiss(mode,brand,line,vitola,code){
  try{
   window.__tcLastMiss={mode:mode,brand:String(brand||"").slice(0,80),line:String(line||"").slice(0,120),vitola:String(vitola||"").slice(0,60),code:String(code||"").slice(0,24)};
   var member=""; try{member=localStorage.getItem("tc_member_email")||""}catch(e){}
-  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-10.1"})}).catch(function(){});
+  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-11.2"})}).catch(function(){});
   setTimeout(maybeMissPrompt,400);
  }catch(e){}
 }
@@ -715,7 +716,7 @@ function missPromptSubmit(){
   try{localStorage.setItem("tc_member_email",email);localStorage.setItem("tc_subscribed","1")}catch(e){}
   var lm=window.__tcLastMiss;
   if(lm){
-   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-10.1"})}).catch(function(){});
+   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-11.2"})}).catch(function(){});
   }
   var body=document.getElementById("missPromptBody");
   if(body)body.innerHTML="<div style='font-weight:700;font-size:19px;margin-bottom:8px'>You're in.</div><div class='small' style='font-size:15px;line-height:1.5'>We will email you the price as soon as we find it. It will be in your History box too.</div><div style='margin-top:14px'><button class='btn' type='button' onclick='missPromptClose()'>Done</button></div>";
@@ -1075,7 +1076,7 @@ function tcRenderHistory(){
    "<div class='small'>"+tcFmtDate(en.ts)+"</div>"+status+"</div></div>"}).join("");
  Array.prototype.forEach.call(el.querySelectorAll(".histrow"),function(row){row.addEventListener("click",function(){tcShowSnapshot(list[Number(row.getAttribute("data-i"))])})});
 }
-/* Icon badge + found-it alerts (build 2026-11-10.1). Platform facts: iOS
+/* Icon badge + found-it alerts (build 2026-11-11.2). Platform facts: iOS
    draws a badge only on the installed home-screen app, only after the
    member allows notifications, and the badge is a number or a dot, never
    a custom glyph. While the app is closed the badge can move only inside
@@ -1123,15 +1124,43 @@ function tcAlertsUi(){
  else{btn.textContent="Turn on found-it alerts";btn.disabled=false;if(msg)msg.textContent="One dot and one notification when we price a cigar you scanned. That is the only time we ever send one."}
 }
 (function(){
- var btn=document.getElementById("btnAlerts");
- if(btn)btn.addEventListener("click",function(){
+ function memberEmail(){
+  var em=""; try{em=localStorage.getItem("tc_member_email")||""}catch(e){}
+  return em;
+ }
+ function askEmail(){
+  var row=document.getElementById("alertsEmailRow"),inp=document.getElementById("alertsEmail"),msg=document.getElementById("alertsMsg");
+  if(msg)msg.textContent="Add your email first, so we know which finds are yours.";
+  if(row)row.style.display="block";
+  if(inp){try{inp.focus()}catch(e){}}
+ }
+ function turnOn(){
   var msg=document.getElementById("alertsMsg");
-  var email=""; try{email=localStorage.getItem("tc_member_email")||""}catch(e){}
-  if(!email){if(msg)msg.textContent="Save your email above first, so we know which finds are yours.";return}
-  Notification.requestPermission().then(function(p){
-   if(p==="granted"){tcPushSubscribe();if(msg)msg.textContent="Alerts on. The next cigar we price for you puts a dot on your icon."}
-   tcAlertsUi();
-  }).catch(function(){tcAlertsUi()});
+  if(!memberEmail()){askEmail();return}
+  if(!("Notification" in window)){if(msg)msg.textContent="Found-it alerts live on the home screen app. Add TrustedCigar to your home screen, open it from the icon, and turn alerts on here.";return}
+  var called=false;
+  var done=function(p){
+   if(called)return; called=true;
+   if(p==="granted"){
+    tcPushSubscribe().then(function(){tcAlertsUi();var m2=document.getElementById("alertsMsg");if(m2)m2.textContent="Found-it alerts are on. When we price a cigar you scanned, a dot appears on your icon and you get one notification."});
+   } else if(p==="denied"){tcAlertsUi()}
+   else{if(msg)msg.textContent="Alerts are not on yet. Tap the button when you are ready, and choose Allow."}
+  };
+  try{
+   var r=Notification.requestPermission(function(p){done(p)});
+   if(r&&typeof r.then==="function")r.then(function(p){done(p)}).catch(function(){done(Notification.permission)});
+  }catch(e){done(Notification.permission)}
+ }
+ var btn=document.getElementById("btnAlerts");
+ if(btn)btn.addEventListener("click",turnOn);
+ var saveBtn=document.getElementById("alertsSave");
+ if(saveBtn)saveBtn.addEventListener("click",function(){
+  var inp=document.getElementById("alertsEmail"),msg=document.getElementById("alertsMsg"),row=document.getElementById("alertsEmailRow");
+  var em=((inp&&inp.value)||"").trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){if(msg)msg.textContent="That email does not look complete. Check it and try again.";if(inp){try{inp.focus()}catch(e){}} return}
+  try{localStorage.setItem("tc_member_email",em)}catch(e){}
+  if(row)row.style.display="none";
+  turnOn();
  });
  tcAlertsUi();
  try{if(localStorage.getItem("tc_push_sub")&&("Notification" in window)&&Notification.permission==="granted")tcPushSubscribe()}catch(e){}
