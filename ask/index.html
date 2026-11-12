@@ -72,12 +72,35 @@ article.qa .a p:last-child{margin-bottom:0}
         <h1 style="font-size:38px">Ask Tito</h1>
         <p class="sub" style="font-size:19px;color:var(--ink)">Any cigar question. A price you want checked, a cigar you keep hearing about, what to smoke next.</p>
         <p class="sub">Tito checks every answer against the verified prices and the sourced ratings before it posts here. If the data does not cover something yet, the answer says so plainly instead of guessing. Right beats fast.</p>
-        <p class="sub">Ask on the <a href="https://facebook.com/61596374159941/posts/pfbid02H5eacyEvMfeb4rncm5PVhtCzVoieA4bPqUodJXTamoaax2wRsqyqj6mDo3ZjKuXXl/">TrustedCigar Facebook page</a>. Answers collect on this page, newest first.</p>
+        <p class="sub">Ask right here in the box below, or on the <a href="https://facebook.com/61596374159941/posts/pfbid02H5eacyEvMfeb4rncm5PVhtCzVoieA4bPqUodJXTamoaax2wRsqyqj6mDo3ZjKuXXl/">TrustedCigar Facebook page</a>. Answers collect on this page, newest first.</p>
       </div>
     </div>
   </div>
 </section>
 
+
+<section id="ask-tito-form" aria-label="Ask Tito a question" style="background:#fff">
+  <div class="wrap" style="max-width:820px;padding-top:8px">
+    <h2 class="sec" style="margin-top:6px">Ask Tito</h2>
+    <form id="askForm" method="POST" target="askHiddenFrame" action="https://docs.google.com/forms/d/e/1FAIpQLScmQfCwJnaar-LVyK6xOZRfciAJl7GyDqAIGjf4APNuokegLw/formResponse">
+      <div style="display:flex;gap:10px;align-items:center;background:#fbf6ea;border:2px solid #d8c49a;border-radius:999px;padding:8px 8px 8px 22px;box-shadow:0 4px 18px rgba(43,29,16,.10)">
+        <input id="askQ" name="entry.831499653" type="text" required maxlength="1000" autocomplete="off" placeholder="Ask Tito anything about cigars and tobacco" aria-label="Your question" style="flex:1;border:0;background:transparent;font-size:18px;color:var(--ink);padding:12px 0;outline:none;font-family:inherit;min-width:0">
+        <button id="askBtn" type="submit" style="background:var(--cigar);color:#fff;border:0;border-radius:999px;padding:13px 26px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Ask Tito</button>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;padding:0 14px">
+        <input id="askName" name="entry.29006183" type="text" maxlength="60" autocomplete="name" placeholder="Your name (optional)" aria-label="Your name, optional" style="flex:1;min-width:170px;border:1px solid #e5d9bd;border-radius:10px;padding:9px 13px;font-size:14px;color:var(--ink);background:#fff;font-family:inherit">
+        <input id="askEmail" name="entry.234207076" type="email" maxlength="120" autocomplete="email" placeholder="Your email, if you want the answer emailed (optional)" aria-label="Your email, optional" style="flex:2;min-width:230px;border:1px solid #e5d9bd;border-radius:10px;padding:9px 13px;font-size:14px;color:var(--ink);background:#fff;font-family:inherit">
+      </div>
+      <p class="ev" style="margin:12px 14px 0">Cigar and tobacco questions only, the whole tobacco world: a cigar identified, a price checked, ratings, what to smoke next, storage, leaf, regions, factories, brands, rolling, history. Your email is only used to send your answer. It is never published.</p>
+      <p id="askErr" style="display:none;color:#a33;font-size:15px;margin:10px 14px 0"></p>
+    </form>
+    <div id="askDone" style="display:none;background:#fbf6ea;border:1px solid #e5d9bd;border-radius:14px;padding:20px 22px;max-width:720px">
+      <p style="font-size:20px;font-weight:700;margin:0 0 6px;color:var(--ink)">Your question is in.</p>
+      <p style="margin:0;color:var(--ink)">Tito checks every answer against the verified prices before it posts here, so give him up to 15 minutes during the day. If you left your email, the answer will also be emailed to you. Right beats fast.</p>
+    </div>
+    <iframe name="askHiddenFrame" id="askHiddenFrame" title="" style="display:none;width:0;height:0;border:0" src="about:blank"></iframe>
+  </div>
+</section>
 
 <section style="background:#fbf6ea">
   <div class="wrap">
@@ -139,6 +162,40 @@ if("serviceWorker" in navigator){
     navigator.serviceWorker.register("/sw.js").catch(function(){});
   });
 }
+</script>
+<script>
+  (function(){
+    var form=document.getElementById('askForm');
+    if(!form) return;
+    var frame=document.getElementById('askHiddenFrame');
+    var btn=document.getElementById('askBtn');
+    var err=document.getElementById('askErr');
+    var submitted=false, timer=null;
+    frame.addEventListener('load',function(){
+      if(!submitted) return;
+      submitted=false;
+      if(timer) clearTimeout(timer);
+      form.style.display='none';
+      var done=document.getElementById('askDone');
+      done.style.display='block';
+      done.scrollIntoView({behavior:'smooth',block:'center'});
+    });
+    form.addEventListener('submit',function(){
+      var q=document.getElementById('askQ');
+      if(!q.value.trim()){ q.focus(); return false; }
+      err.style.display='none';
+      submitted=true;
+      btn.disabled=true; btn.textContent='Sending...';
+      timer=setTimeout(function(){
+        if(!submitted) return;
+        submitted=false;
+        btn.disabled=false; btn.textContent='Ask Tito';
+        err.textContent='That did not go through. Please try again in a moment, or ask on the TrustedCigar Facebook page.';
+        err.style.display='block';
+      },15000);
+      return true;
+    });
+  })();
 </script>
 </body>
 </html>
