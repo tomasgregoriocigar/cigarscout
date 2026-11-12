@@ -306,8 +306,20 @@ if("serviceWorker" in navigator){
         thinking.firstChild.innerHTML=cigarAnswer(rec,q);
         log.scrollTop=log.scrollHeight; return;
       }
-      thinking.firstChild.innerHTML='That one needs Tito himself, and it is in. The answer posts on this page, and if you left your email it lands in your inbox too. Give him up to 15 minutes during the day. Right beats fast.';
-      log.scrollTop=log.scrollHeight;
+      var ctrl=('AbortController' in window)?new AbortController():null;
+      var to=ctrl?setTimeout(function(){ctrl.abort();},15000):null;
+      fetch('https://trustedcigar-band-vision.tomas-gregorio.workers.dev/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q}),signal:ctrl?ctrl.signal:undefined})
+        .then(function(r){ if(to)clearTimeout(to); if(!r.ok) throw new Error('ask'); return r.json(); })
+        .then(function(j){
+          if(!j||!j.answer) throw new Error('ask');
+          thinking.firstChild.innerHTML=j.answer.split(/\n{2,}/).map(function(par){return '<p style="margin:0 0 8px">'+esc(par).replace(/\n/g,'<br>')+'</p>';}).join('');
+          log.scrollTop=log.scrollHeight;
+        })
+        .catch(function(){
+          if(to)clearTimeout(to);
+          thinking.firstChild.innerHTML='That one needs Tito himself, and it is in. The answer posts on this page, and if you left your email it lands in your inbox too. Give him up to 15 minutes during the day. Right beats fast.';
+          log.scrollTop=log.scrollHeight;
+        });
     });
   });
 })();
