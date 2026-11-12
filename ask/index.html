@@ -72,8 +72,36 @@ article.qa .a p:last-child{margin-bottom:0}
         <h1 style="font-size:38px">Ask Tito</h1>
         <p class="sub" style="font-size:19px;color:var(--ink)">Any cigar question. A price you want checked, a cigar you keep hearing about, what to smoke next.</p>
         <p class="sub">Tito checks every answer against the verified prices and the sourced ratings before it posts here. If the data does not cover something yet, the answer says so plainly instead of guessing. Right beats fast.</p>
-        <p class="sub">Ask on the <a href="https://facebook.com/61596374159941/posts/pfbid02H5eacyEvMfeb4rncm5PVhtCzVoieA4bPqUodJXTamoaax2wRsqyqj6mDo3ZjKuXXl/">TrustedCigar Facebook page</a>, or in the app when Ask Tito lands there. Answers collect on this page, newest first.</p>
+        <p class="sub">Ask right here in the box below, or on the <a href="https://facebook.com/61596374159941/posts/pfbid02H5eacyEvMfeb4rncm5PVhtCzVoieA4bPqUodJXTamoaax2wRsqyqj6mDo3ZjKuXXl/">TrustedCigar Facebook page</a>. Answers collect on this page, newest first.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<section id="ask-tito-form" style="background:#fff">
+  <div class="wrap">
+    <h2 class="sec">Ask Tito a question</h2>
+    <p class="sub" style="margin-bottom:18px">Type your question here. A price you want checked, a cigar you keep hearing about, what to smoke next, how to store what you have.</p>
+    <form id="askForm" style="background:#fbf6ea;border:1px solid #e5d9bd;border-radius:14px;padding:22px 24px;box-shadow:0 2px 10px rgba(43,29,16,.06);max-width:720px">
+      <label for="askQ" style="display:block;font-weight:700;margin:0 0 8px">Your question</label>
+      <textarea id="askQ" name="question" rows="4" required maxlength="1000" placeholder="Example: Is $11 a good price for a Liga Privada No. 9 Toro?" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #d8c9a3;border-radius:10px;font:inherit;background:#fff"></textarea>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:14px">
+        <div style="flex:1;min-width:200px">
+          <label for="askName" style="display:block;font-weight:700;margin:0 0 8px">Your name <span style="font-weight:400;color:#7a6a4d">(optional)</span></label>
+          <input id="askName" name="name" type="text" maxlength="60" placeholder="First name is plenty" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #d8c9a3;border-radius:10px;font:inherit;background:#fff">
+        </div>
+        <div style="flex:1;min-width:200px">
+          <label for="askEmail" style="display:block;font-weight:700;margin:0 0 8px">Your email <span style="font-weight:400;color:#7a6a4d">(optional)</span></label>
+          <input id="askEmail" name="email" type="email" maxlength="120" placeholder="So Tito can email your answer" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #d8c9a3;border-radius:10px;font:inherit;background:#fff">
+        </div>
+      </div>
+      <p class="ev" style="margin:12px 0 0">Your email is only used to send your answer. It is never published. Answers on this page show a first name only.</p>
+      <button id="askBtn" type="submit" class="cta" style="background:var(--amber);color:#fff;margin-top:16px">Ask Tito</button>
+      <p id="askErr" style="display:none;color:#a33;margin:12px 0 0"></p>
+    </form>
+    <div id="askDone" style="display:none;background:#fbf6ea;border:1px solid #e5d9bd;border-radius:14px;padding:22px 24px;max-width:720px">
+      <h3 style="margin:0 0 10px">Your question is in.</h3>
+      <p style="margin:0">Tito checks every answer against the verified prices before it posts here, so give him up to 15 minutes during the day. If you left your email, the answer will also be emailed to you. Right beats fast.</p>
     </div>
   </div>
 </section>
@@ -122,6 +150,40 @@ article.qa .a p:last-child{margin-bottom:0}
   document.getElementById('ag-no').addEventListener('click',function(){
     document.getElementById('ag-msg').textContent='Sorry, this resource is for adults 21 and older.';
   });
+</script>
+<script>
+  (function(){
+    var form=document.getElementById('askForm');
+    if(!form) return;
+    form.addEventListener('submit',function(ev){
+      ev.preventDefault();
+      var btn=document.getElementById('askBtn');
+      var err=document.getElementById('askErr');
+      err.style.display='none';
+      btn.disabled=true; btn.textContent='Sending...';
+      var payload={
+        name: document.getElementById('askName').value.trim(),
+        email: document.getElementById('askEmail').value.trim(),
+        question: document.getElementById('askQ').value.trim(),
+        _subject: 'Ask Tito question',
+        _template: 'table'
+      };
+      fetch('https://formsubmit.co/ajax/partners@trustedcigar.com',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body: JSON.stringify(payload)
+      }).then(function(r){ return r.json().catch(function(){ return {}; }); }).then(function(d){
+        if(d && (d.success===true || d.success==='true')){
+          form.style.display='none';
+          document.getElementById('askDone').style.display='block';
+        } else { throw new Error('send failed'); }
+      }).catch(function(){
+        btn.disabled=false; btn.textContent='Ask Tito';
+        err.textContent='That did not go through. Please try again in a moment, or ask on the TrustedCigar Facebook page.';
+        err.style.display='block';
+      });
+    });
+  })();
 </script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1a0436df2f214d81b4258178c56bba9b"}'></script><!-- End Cloudflare Web Analytics -->
 <script>
