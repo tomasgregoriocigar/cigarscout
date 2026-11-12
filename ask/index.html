@@ -82,23 +82,22 @@ article.qa .a p:last-child{margin-bottom:0}
 <section id="ask-tito-form" aria-label="Ask Tito a question" style="background:#fff">
   <div class="wrap" style="max-width:820px;padding-top:8px">
     <h2 class="sec" style="margin-top:6px">Ask Tito</h2>
-    <form id="askForm" method="POST" target="askHiddenFrame" action="https://docs.google.com/forms/d/e/1FAIpQLScmQfCwJnaar-LVyK6xOZRfciAJl7GyDqAIGjf4APNuokegLw/formResponse">
+    <div id="askLog" aria-live="polite" style="min-height:60px">
+      <div style="display:flex;justify-content:flex-start;margin:10px 0">
+        <div style="background:#fbf6ea;border:1px solid #e5d9bd;border-radius:16px 16px 16px 4px;padding:10px 14px;max-width:88%;font-size:16px;line-height:1.5;color:var(--ink)">Ask me anything about cigars and tobacco. Prices and ratings come straight from the verified database, in seconds. Anything I cannot verify, I take myself and answer on this page.</div>
+      </div>
+    </div>
+    <form id="askForm">
       <div style="display:flex;gap:10px;align-items:center;background:#fbf6ea;border:2px solid #d8c49a;border-radius:999px;padding:8px 8px 8px 22px;box-shadow:0 4px 18px rgba(43,29,16,.10)">
-        <input id="askQ" name="entry.831499653" type="text" required maxlength="1000" autocomplete="off" placeholder="Ask Tito anything about cigars and tobacco" aria-label="Your question" style="flex:1;border:0;background:transparent;font-size:18px;color:var(--ink);padding:12px 0;outline:none;font-family:inherit;min-width:0">
+        <input id="askQ" type="text" required maxlength="1000" autocomplete="off" placeholder="Ask Tito anything about cigars and tobacco" aria-label="Your question" style="flex:1;border:0;background:transparent;font-size:18px;color:var(--ink);padding:12px 0;outline:none;font-family:inherit;min-width:0">
         <button id="askBtn" type="submit" style="background:var(--cigar);color:#fff;border:0;border-radius:999px;padding:13px 26px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Ask Tito</button>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;padding:0 14px">
-        <input id="askName" name="entry.29006183" type="text" maxlength="60" autocomplete="name" placeholder="Your name (optional)" aria-label="Your name, optional" style="flex:1;min-width:170px;border:1px solid #e5d9bd;border-radius:10px;padding:9px 13px;font-size:14px;color:var(--ink);background:#fff;font-family:inherit">
-        <input id="askEmail" name="entry.234207076" type="email" maxlength="120" autocomplete="email" placeholder="Your email, if you want the answer emailed (optional)" aria-label="Your email, optional" style="flex:2;min-width:230px;border:1px solid #e5d9bd;border-radius:10px;padding:9px 13px;font-size:14px;color:var(--ink);background:#fff;font-family:inherit">
+        <input id="askName" type="text" maxlength="60" autocomplete="name" placeholder="Your name (optional)" aria-label="Your name, optional" style="flex:1;min-width:170px;border:1px solid #e5d9bd;border-radius:10px;padding:9px 13px;font-size:14px;color:var(--ink);background:#fff;font-family:inherit">
+        <input id="askEmail" type="email" maxlength="120" autocomplete="email" placeholder="Your email, if you want the answer emailed (optional)" aria-label="Your email, optional" style="flex:2;min-width:230px;border:1px solid #e5d9bd;border-radius:10px;padding:9px 13px;font-size:14px;color:var(--ink);background:#fff;font-family:inherit">
       </div>
       <p class="ev" style="margin:12px 14px 0">Cigar and tobacco questions only, the whole tobacco world: a cigar identified, a price checked, ratings, what to smoke next, storage, leaf, regions, factories, brands, rolling, history. Your email is only used to send your answer. It is never published.</p>
-      <p id="askErr" style="display:none;color:#a33;font-size:15px;margin:10px 14px 0"></p>
     </form>
-    <div id="askDone" style="display:none;background:#fbf6ea;border:1px solid #e5d9bd;border-radius:14px;padding:20px 22px;max-width:720px">
-      <p style="font-size:20px;font-weight:700;margin:0 0 6px;color:var(--ink)">Your question is in.</p>
-      <p style="margin:0;color:var(--ink)">Tito checks every answer against the verified prices before it posts here, so give him up to 15 minutes during the day. If you left your email, the answer will also be emailed to you. Right beats fast.</p>
-    </div>
-    <iframe name="askHiddenFrame" id="askHiddenFrame" title="" style="display:none;width:0;height:0;border:0" src="about:blank"></iframe>
   </div>
 </section>
 
@@ -164,38 +163,152 @@ if("serviceWorker" in navigator){
 }
 </script>
 <script>
-  (function(){
-    var form=document.getElementById('askForm');
-    if(!form) return;
-    var frame=document.getElementById('askHiddenFrame');
-    var btn=document.getElementById('askBtn');
-    var err=document.getElementById('askErr');
-    var submitted=false, timer=null;
-    frame.addEventListener('load',function(){
-      if(!submitted) return;
-      submitted=false;
-      if(timer) clearTimeout(timer);
-      form.style.display='none';
-      var done=document.getElementById('askDone');
-      done.style.display='block';
-      done.scrollIntoView({behavior:'smooth',block:'center'});
+(function(){
+  var log=document.getElementById('askLog');
+  var form=document.getElementById('askForm');
+  if(!log||!form) return;
+  var input=document.getElementById('askQ');
+  var btn=document.getElementById('askBtn');
+  var ENDPOINT='https://docs.google.com/forms/d/e/1FAIpQLScmQfCwJnaar-LVyK6xOZRfciAJl7GyDqAIGjf4APNuokegLw/formResponse';
+  var DECLINE='Thanks for writing. Ask Tito only answers cigar and tobacco questions: identification, prices, ratings, what to smoke, storage, and the craft and history behind them. Ask me one of those and I will get right on it.';
+  var STOP={a:1,an:1,the:1,is:1,it:1,of:1,for:1,me:1,my:1,i:1,do:1,does:1,what:1,how:1,much:1,about:1,tell:1,can:1,you:1,should:1,which:1,who:1,are:1,was:1,were:1,this:1,that:1,with:1,from:1,have:1,has:1,get:1,got:1,good:1,best:1,any:1,and:1,or:1,to:1,in:1,on:1,at:1,by:1,be:1,am:1,im:1,one:1,ones:1,like:1,just:1,really:1,please:1,know:1,find:1,where:1,when:1,why:1,will:1,would:1,should:1,smoke:1,smoking:1};
+  function toks(t){return String(t||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').split(/\s+/).filter(function(w){return w&&!STOP[w];});}
+  function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+  function addUser(text){
+    var d=document.createElement('div');
+    d.style.cssText='display:flex;justify-content:flex-end;margin:10px 0';
+    d.innerHTML='<div style="background:var(--cigar);color:#fff;border-radius:16px 16px 4px 16px;padding:10px 14px;max-width:82%;font-size:16px;line-height:1.45">'+esc(text)+'</div>';
+    log.appendChild(d); log.scrollTop=log.scrollHeight; return d;
+  }
+  function addTito(html){
+    var d=document.createElement('div');
+    d.style.cssText='display:flex;justify-content:flex-start;margin:10px 0';
+    d.innerHTML='<div style="background:#fbf6ea;border:1px solid #e5d9bd;border-radius:16px 16px 16px 4px;padding:10px 14px;max-width:88%;font-size:16px;line-height:1.5;color:var(--ink)">'+html+'</div>';
+    log.appendChild(d); log.scrollTop=log.scrollHeight; return d;
+  }
+  /* Q&A corpus straight from the published page */
+  var corpus=[];
+  Array.prototype.forEach.call(document.querySelectorAll('article.qa'),function(a){
+    var q=a.querySelector('.q'), body=a.querySelector('.a');
+    if(q&&body) corpus.push({id:a.id, q:q.textContent, html:body.innerHTML, tk:toks(q.textContent+' '+body.textContent)});
+  });
+  function qaMatch(qt){
+    var uniq=[],seen0={};
+    qt.forEach(function(w){ if(!seen0[w]){uniq.push(w);seen0[w]=1;} });
+    if(uniq.length<3) return null;
+    var best=null,bs=0;
+    corpus.forEach(function(e){
+      var set={};
+      e.tk.forEach(function(w){set[w]=1;});
+      var inter=0;
+      uniq.forEach(function(w){ if(set[w]) inter++; });
+      var cov=inter/uniq.length;
+      if(inter>=3&&cov>bs){bs=cov;best=e;}
     });
-    form.addEventListener('submit',function(){
-      var q=document.getElementById('askQ');
-      if(!q.value.trim()){ q.focus(); return false; }
-      err.style.display='none';
-      submitted=true;
-      btn.disabled=true; btn.textContent='Sending...';
-      timer=setTimeout(function(){
-        if(!submitted) return;
-        submitted=false;
-        btn.disabled=false; btn.textContent='Ask Tito';
-        err.textContent='That did not go through. Please try again in a moment, or ask on the TrustedCigar Facebook page.';
-        err.style.display='block';
-      },15000);
-      return true;
+    return (best&&bs>=0.6)?best:null;
+  }
+  /* Price database (same shards the scanner uses) */
+  var DB=null, dbLoading=null;
+  function loadDB(){
+    if(DB) return Promise.resolve(DB);
+    if(dbLoading) return dbLoading;
+    var files=['/scanner/data-0.json','/scanner/data-1.json','/scanner/data-2.json'];
+    dbLoading=Promise.all(files.map(function(f){return fetch(f).then(function(r){return r.json();});})).then(function(parts){
+      DB=[];
+      parts.forEach(function(p){ if(Array.isArray(p)) DB=DB.concat(p); });
+      DB.forEach(function(rec){
+        rec._name=(rec.brand+' '+rec.line+' '+rec.vitola).trim();
+        rec._tk=toks(rec._name);
+      });
+      return DB;
+    }).catch(function(){ DB=[]; return DB; });
+    return dbLoading;
+  }
+  function matchCigar(qt){
+    if(!DB||!DB.length) return null;
+    var qset={}; qt.forEach(function(w){qset[w]=1;});
+    var best=null,bs=0;
+    DB.forEach(function(rec){
+      var hit=0; rec._tk.forEach(function(w){ if(qset[w]) hit++; });
+      if(!hit) return;
+      var score=hit/rec._tk.length;
+      if(hit>=2&&score>bs){bs=score;best=rec;}
     });
-  })();
+    return (best&&bs>=0.6)?best:null;
+  }
+  function money(n){ return '$'+Number(n).toFixed(2); }
+  function priceHTML(rec){
+    if(!rec.trust_prices||!rec.trust_prices.length) return '<p style="margin:6px 0 0">No verified price on file for this one yet. That is a not verified yet, not a guess.</p>';
+    var rows=rec.trust_prices.slice().sort(function(a,b){return a.per_stick-b.per_stick;}).map(function(p){
+      var star=(p.vendor==='Cigar Page')?'*':'';
+      var when=String(p.checked_at||'').slice(0,10);
+      return '<div style="margin:3px 0"><a href="'+p.url+'" target="_blank" rel="noopener" style="color:var(--cigar);font-weight:700">'+esc(p.vendor)+'</a>: <strong>'+money(p.per_stick)+star+'</strong> per stick'+(when?', checked '+esc(when):'')+'</div>';
+    }).join('');
+    var foot=rec.trust_prices.some(function(p){return p.vendor==='Cigar Page';})?'<p style="margin:6px 0 0;font-size:13px;color:#6b543a">* = pack or box price shown per stick: this retailer sells multipacks and boxes only, not single cigars.</p>':'';
+    return '<div style="margin-top:6px">'+rows+'</div>'+foot;
+  }
+  function cigarAnswer(rec,qraw){
+    var name='<strong>'+esc(rec._name)+'</strong>';
+    var bits=[];
+    if(rec.rating) bits.push('Rated <strong>'+esc(String(rec.rating))+'</strong>'+(rec.rating_source?' by '+esc(rec.rating_source):''));
+    if(rec.strength) bits.push('Strength: '+esc(rec.strength));
+    if(rec.wrapper) bits.push('Wrapper: '+esc(rec.wrapper));
+    if(rec.origin) bits.push('Origin: '+esc(rec.origin));
+    var head='That is the '+name+'.';
+    var body=bits.length?'<p style="margin:6px 0 0">'+bits.join('. ')+'.</p>':'';
+    var notes='';
+    if(rec.notes&&/\b(taste|flavor|notes|like)\b/i.test(qraw)) notes='<p style="margin:6px 0 0">'+esc(rec.notes)+'</p>';
+    return head+body+notes+priceHTML(rec);
+  }
+  function logToInbox(q){
+    try{
+      var name=(document.getElementById('askName').value||'').trim();
+      var email=(document.getElementById('askEmail').value||'').trim();
+      var fd=new FormData();
+      fd.append('entry.831499653',q);
+      if(name) fd.append('entry.29006183',name);
+      if(email) fd.append('entry.234207076',email);
+      fetch(ENDPOINT,{method:'POST',mode:'no-cors',body:fd}).catch(function(){});
+    }catch(e){}
+  }
+  var lastLog=0;
+  form.addEventListener('submit',function(ev){
+    ev.preventDefault();
+    var q=input.value.trim();
+    if(!q) { input.focus(); return; }
+    input.value='';
+    addUser(q);
+    var now=Date.now();
+    if(now-lastLog>4000){ logToInbox(q); lastLog=now; }
+    var low=q.toLowerCase();
+    if(/\bcuban\b|\bcuba\b/.test(low)&&/\b(buy|get|find|order|ship|source|import|bring)\b/.test(low)){
+      addTito('Tito does not help source Cuban cigars. Ask me about anything else in the cigar and tobacco world.'); return;
+    }
+    if(/\b(health|healthy|safe|safer|cancer|lungs?|doctor|medical|pregnan|disease|risk)\b/.test(low)&&!/\b(risk)\b.*\b(flavor|taste)\b/.test(low)){
+      addTito('Tito does not do health claims, and he will not dress one up. Ask me about the cigars themselves: the leaf, the making, the price, the smoke.'); return;
+    }
+    if(!/\b(cigar|tobacco|humidor|smoke|smoking|leaf|wrapper|maduro|connecticut|robusto|toro|churchill|corona|lancero|torpedo|gordo|nicaragua|honduras|dominican|habano|broadleaf|oscuro|vitola|band|ash|draw|burn|aging|age|cellar|factory|brand|roll|blend|strength|flavor|taste|price|rating|rated)\b/.test(low)&&/\b(homework|essay|code|coding|python|javascript|weather|stock market|election|recipe|math|translate|poem|song lyrics)\b/.test(low)){
+      addTito(esc(DECLINE)); return;
+    }
+    var qt=toks(q);
+    var thinking=addTito('Tito is checking the verified prices and the answered questions...');
+    loadDB().then(function(){
+      var qa=qaMatch(qt);
+      if(qa){
+        thinking.firstChild.innerHTML=qa.html+'<p style="margin:8px 0 0;font-size:14px">Already answered on this page: <a href="#'+qa.id+'" style="color:var(--cigar);font-weight:700">see it in Questions and answers</a>.</p>';
+        log.scrollTop=log.scrollHeight; return;
+      }
+      var rec=matchCigar(qt);
+      if(rec){
+        thinking.firstChild.innerHTML=cigarAnswer(rec,q);
+        log.scrollTop=log.scrollHeight; return;
+      }
+      thinking.firstChild.innerHTML='That one needs Tito himself, and it is in. The answer posts on this page, and if you left your email it lands in your inbox too. Give him up to 15 minutes during the day. Right beats fast.';
+      log.scrollTop=log.scrollHeight;
+    });
+  });
+})();
 </script>
+
 </body>
 </html>
