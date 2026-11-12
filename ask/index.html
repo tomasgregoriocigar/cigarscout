@@ -271,6 +271,9 @@ if("serviceWorker" in navigator){
       fetch(ENDPOINT,{method:'POST',mode:'no-cors',body:fd}).catch(function(){});
     }catch(e){}
   }
+  /* Warm the database in the background so the first answer is fast too. */
+  if(window.requestIdleCallback){ requestIdleCallback(function(){ loadDB(); },{timeout:4000}); }
+  else { setTimeout(function(){ loadDB(); },1800); }
   var lastLog=0;
   form.addEventListener('submit',function(ev){
     ev.preventDefault();
