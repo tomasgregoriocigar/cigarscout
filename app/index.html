@@ -40,7 +40,7 @@
 
 <div class="wrap" style="margin-top:14px">
   <button id="appHistBtn" type="button" style="width:100%;background:#2b1d10;color:#ffe1a1;border:2px solid #d8a94e;border-radius:12px;padding:14px;font-size:17px;font-weight:700;cursor:pointer">History — your last scans<span id="appHistCount"></span></button>
-  <div id="appHistBody" style="display:none;margin-top:10px"></div>
+  <div id="appHistBack" style="display:none;margin-top:10px"><button type="button" id="appHistBackBtn" style="color:#ffe1a1;background:#2b241d;border:1px solid #d8a94e;border-radius:999px;padding:9px 22px;font-weight:700;font-size:15px;cursor:pointer">&#8249; Back</button></div><div id="appHistBody" style="display:none;margin-top:10px"></div>
 </div>
 
 <div class="wrap" style="margin-top:10px">
@@ -295,5 +295,6 @@ if("serviceWorker" in navigator){
 })();
 </script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1a0436df2f214d81b4258178c56bba9b"}'></script><!-- End Cloudflare Web Analytics -->
+<script>(function(){var b=document.getElementById("appHistBtn"),r=document.getElementById("appHistBack"),body=document.getElementById("appHistBody"),bk=document.getElementById("appHistBackBtn");if(!b||!r||!body||!bk)return;b.addEventListener("click",function(){setTimeout(function(){r.style.display=(body.style.display!=="none")?"block":"none";},60);});bk.addEventListener("click",function(){b.click();r.style.display="none";b.scrollIntoView({block:"start"});});})();</script>
 </body>
 </html>
