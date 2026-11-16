@@ -307,6 +307,14 @@ if("serviceWorker" in navigator){
       addTito(esc(DECLINE)); return;
     }
     var qt=toks(q);
+    /* Intent gate (Nov 16, 2026): a troubleshooting or experience question about a
+       named cigar is a smoking question, not a price lookup. When the question
+       carries experience language and no explicit price intent, matchCigar is
+       skipped and the question falls through to the answered-questions corpus
+       and the backend answer path. Explicit price wording always wins. */
+    var priceIntent=/\b(price|prices|priced|pricing|cost|costs|how much|cheapest|cheap|deals?|expensive|buy|order|shop|store)\b/.test(low)||/\$\s?\d/.test(low)||/\b\d+\s*(dollars|bucks)\b/.test(low);
+    var troubleIntent=/\b(why|draw|hard|tight|plugged|plug|burn|burns|burning|canoe|canoeing|tunnel|tunneling|tunnels|bitter|harsh|unravel|unraveling|unravelling|unwind|unwinding|ash|relight|stays lit|stay lit|going out|goes out|keeps going)\b/.test(low)||/\btastes?\b[^.?!]{0,30}\b(bitter|harsh|bad|awful|terrible|sour|metallic|off|weird|burnt|burned|nasty)\b/.test(low);
+    var experienceOnly=troubleIntent&&!priceIntent;
     var thinking=addTito('Cubichi is checking the verified prices and the answered questions...');
     loadDB().then(function(){
       var qa=qaMatch(qt);
@@ -314,7 +322,7 @@ if("serviceWorker" in navigator){
         thinking.firstChild.innerHTML=qa.html+'<p style="margin:8px 0 0;font-size:14px">Already answered on this page: <a href="#'+qa.id+'" style="color:var(--cigar);font-weight:700">see it in Questions and answers</a>.</p>';
         log.scrollTop=log.scrollHeight; return;
       }
-      var rec=matchCigar(qt);
+      var rec=experienceOnly?null:matchCigar(qt);
       if(rec){
         thinking.firstChild.innerHTML=cigarAnswer(rec,q);
         log.scrollTop=log.scrollHeight; return;
