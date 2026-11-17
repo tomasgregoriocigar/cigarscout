@@ -119,8 +119,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-12.1 -->
-<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-12.1</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-17.1 -->
+<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-17.1</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -417,7 +417,7 @@ function onDecode(text){
  resolveCode(code,"Camera");
  setTimeout(function(){if(scanning)firstReadPending=true},1200); // re-arm for the next stick
 }
-/* Barcode camera removed Nov 10, 2026 (build 2026-11-12.1): the catalogue holds 17 UPCs, so the barcode path could only ever miss. Band photo is the scanner. */
+/* Barcode camera removed Nov 10, 2026 (build 2026-11-17.1): the catalogue holds 17 UPCs, so the barcode path could only ever miss. Band photo is the scanner. */
 /* ---- Photograph the band: on-device OCR of the band lettering, matched
    against the full catalogue's line names. The Oct 27 rule stands — a
    cigar is a candidate only on real name evidence, never a guess — and
@@ -439,7 +439,9 @@ function buildNameIndex(){
   var toks=[],tseen={};
   bandTokens((c.brand||"")+" "+(c.line||"")).forEach(function(t){if(!tseen[t]&&t.length>=2){tseen[t]=1;toks.push(t)}}); // 1-letter tokens (initials like S.T.K.) are not band evidence — at catalogue scale their joined pairs false-match inside unrelated words
   if(norm(c.brand)==="e.p. carrillo"&&!tseen["PEREZ"]){tseen["PEREZ"]=1;toks.push("PEREZ")} // Ernesto Pérez Carrillo's bands read "Perez Carrillo" while the catalogue files the brand by his initials — index the surname as band evidence; the confirm card still judges it
-  NAME_INDEX.push({brand:c.brand,line:c.line,tokens:toks});
+  var btoks={};bandTokens(c.brand||"").forEach(function(t){if(t.length>=2)btoks[t]=1});
+  if(norm(c.brand)==="e.p. carrillo")btoks["PEREZ"]=1;
+  NAME_INDEX.push({brand:c.brand,line:c.line,tokens:toks,brandToks:btoks});
  });
  NAME_INDEX.forEach(function(e){e.tokens.forEach(function(t){freq[t]=(freq[t]||0)+1})});
  NAME_INDEX.forEach(function(e){e.freq=freq});
@@ -494,11 +496,13 @@ function matchBand(texts){
     for(var k2=0;k2<allToks.length;k2++){var o2=allToks[k2];if(o2.length>=5&&(t.indexOf(o2)>=0||o2.indexOf(t)>=0)){frag.push(t);return}}
    }
   });
+  var pairHit=false;
   for(var i=0;i+1<e.tokens.length;i++){
    if(e.tokens[i].length<4||e.tokens[i+1].length<4)continue;
    var pair=e.tokens[i]+e.tokens[i+1];
    for(var j2=0;j2<joinedList.length;j2++){
     if(joinedList[j2].indexOf(pair)>=0){
+     pairHit=true;
      if(exact.indexOf(e.tokens[i])<0)exact.push(e.tokens[i]);
      if(exact.indexOf(e.tokens[i+1])<0)exact.push(e.tokens[i+1]);
     }
@@ -508,7 +512,16 @@ function matchBand(texts){
   fuzzy.forEach(function(t){if(matched.indexOf(t)<0)matched.push(t)});
   var distinctive=exact.some(function(t){return standalone[t]&&e.freq[t]===1&&t.length>=5&&!BAND_GENERIC[t]});
   var ok=false,conf="possible";
-  if(exact.length>=2){ok=true;conf=(exact.length>=3||(e.tokens.length&&exact.length/e.tokens.length>=0.5))?"strong":"possible"}
+  if(exact.length>=2){
+   /* Anchor rule (Nov 17, 2026): two loose exact reads are not enough on
+      their own — a vision read of "LIVE MADURO" (carved out of OLIVA)
+      matched Caldwell's Long Live The Queen on exactly that. A multi-read
+      match must anchor: a brand token among the reads, a token unique to
+      this line, an adjacent pair read as one blob, or three-plus reads
+      with a non-generic among them. Otherwise it stays no match. */
+   var anchored=pairHit||exact.some(function(t){return e.brandToks&&e.brandToks[t]})||exact.some(function(t){return e.freq[t]===1})||(exact.length>=3&&exact.some(function(t){return !BAND_GENERIC[t]}));
+   if(anchored){ok=true;conf=(exact.length>=3||(e.tokens.length&&exact.length/e.tokens.length>=0.5))?"strong":"possible"}
+  }
   else if(exact.length===1&&distinctive){ok=true}
   else if(exact.length>=1&&matched.length>=2&&matched.some(function(t){return !BAND_GENERIC[t]})){ok=true}
   else if(exact.length===1&&frag.length>=1&&!BAND_GENERIC[exact[0]]){ok=true}
@@ -681,7 +694,7 @@ function reportMiss(mode,brand,line,vitola,code){
  try{
   window.__tcLastMiss={mode:mode,brand:String(brand||"").slice(0,80),line:String(line||"").slice(0,120),vitola:String(vitola||"").slice(0,60),code:String(code||"").slice(0,24)};
   var member=""; try{member=localStorage.getItem("tc_member_email")||""}catch(e){}
-  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-12.1"})}).catch(function(){});
+  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-17.1"})}).catch(function(){});
   setTimeout(maybeMissPrompt,400);
  }catch(e){}
 }
@@ -717,7 +730,7 @@ function missPromptSubmit(){
   try{localStorage.setItem("tc_member_email",email);localStorage.setItem("tc_subscribed","1")}catch(e){}
   var lm=window.__tcLastMiss;
   if(lm){
-   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-12.1"})}).catch(function(){});
+   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-17.1"})}).catch(function(){});
   }
   var body=document.getElementById("missPromptBody");
   if(body)body.innerHTML="<div style='font-weight:700;font-size:19px;margin-bottom:8px'>You're in.</div><div class='small' style='font-size:15px;line-height:1.5'>We will email you the price as soon as we find it. It will be in your History box too.</div><div style='margin-top:14px'><button class='btn' type='button' onclick='missPromptClose()'>Done</button></div>";
@@ -1083,7 +1096,7 @@ function tcRenderHistory(){
    "<div class='small'>"+tcFmtDate(en.ts)+"</div>"+status+"</div></div>"}).join("");
  Array.prototype.forEach.call(el.querySelectorAll(".histrow"),function(row){row.addEventListener("click",function(){tcShowSnapshot(list[Number(row.getAttribute("data-i"))])})});
 }
-/* Icon badge + found-it alerts (build 2026-11-12.1). Platform facts: iOS
+/* Icon badge + found-it alerts (build 2026-11-17.1). Platform facts: iOS
    draws a badge only on the installed home-screen app, only after the
    member allows notifications, and the badge is a number or a dot, never
    a custom glyph. While the app is closed the badge can move only inside
