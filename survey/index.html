@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="google-site-verification" content="VKqj5kbkfbrRBYsIl4CijsT_o0qiVlP2iJ6gvSVbheI" />
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-4ZJFW35M55"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-4ZJFW35M55');
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The 1,000 Smoker Survey | TrustedCigar</title>
+<meta name="description" content="Two questions, under a minute. We reached thousands of cigar smokers and only 78 answered. We need 1,000 answers before the numbers mean anything, and then the full results go public.">
+<meta property="og:title" content="The 1,000 Smoker Survey | TrustedCigar">
+<meta property="og:description" content="78 smokers have answered. That is an anecdote, not a statistic. Help us reach 1,000, and the full results go public.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://trustedcigar.com/survey/">
+<link rel="stylesheet" href="/styles.css">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#2b1d10">
+<style>
+:root{--amber:#d8a94e;--cigar:#2b1d10;--ink:#241c14;--paper:#fbf6ea;--warn:#a3541f}
+body{background:var(--paper);color:var(--ink)}
+.survey-wrap{max-width:760px;margin:0 auto;padding:28px 18px 60px}
+.counter-card{background:#171310;color:#f5ead9;border-radius:18px;padding:30px 28px;text-align:center;box-shadow:0 10px 30px rgba(43,29,16,.28)}
+.counter-num{font-size:64px;font-weight:800;line-height:1;color:#ffe1a1;margin:6px 0 2px}
+.counter-of{font-size:19px;color:#e8dcc4}
+.counter-label{font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:#cbb58d;margin-top:8px}
+.counter-bar{height:12px;background:#2b241d;border-radius:999px;margin:18px auto 4px;max-width:520px;overflow:hidden}
+.counter-fill{height:100%;background:var(--amber);border-radius:999px}
+.why{background:#fff;border:1px solid #e5d9bd;border-radius:14px;padding:22px 24px;margin:22px 0;box-shadow:0 2px 10px rgba(43,29,16,.06)}
+.why p{margin:0 0 10px}.why p:last-child{margin-bottom:0}
+fieldset.q{background:#fff;border:1px solid #e5d9bd;border-radius:14px;padding:22px 24px;margin:0 0 22px;box-shadow:0 2px 10px rgba(43,29,16,.06)}
+fieldset.q legend{font-size:21px;font-weight:700;padding:0 6px}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid #e5d9bd;border-radius:10px;margin:0 0 10px;cursor:pointer;background:#fffdf7}
+.opt:hover{border-color:var(--amber)}
+.opt input{margin-top:4px;accent-color:#a3541f;width:18px;height:18px}
+.opt .t{font-size:17px}
+.prize{background:#fdf3da;border:1px solid var(--amber);border-radius:14px;padding:20px 24px;margin:0 0 22px}
+.prize h3{margin:0 0 8px;font-size:19px}
+.prize p{margin:0 0 8px}.prize p:last-child{margin-bottom:0}
+.emailrow{margin:0 0 18px}
+.emailrow label{display:block;font-weight:600;margin-bottom:6px}
+.emailrow input{width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid #d9c9a3;border-radius:10px;font-size:16px;font-family:inherit;background:#fff}
+.submitbtn{display:block;width:100%;padding:16px;background:var(--cigar);color:#ffe1a1;border:none;border-radius:12px;font-size:19px;font-weight:700;cursor:pointer;font-family:inherit}
+.submitbtn:disabled{opacity:.55;cursor:default}
+.fineprint{font-size:13px;color:#6d5c43;margin-top:14px;text-align:center}
+.thanks{display:none;background:#171310;color:#f5ead9;border-radius:18px;padding:30px 28px;text-align:center}
+.thanks h2{color:#ffe1a1;margin:0 0 10px}
+.err{display:none;color:#a31f1f;font-weight:600;margin:0 0 12px}
+</style>
+</head>
+<body>
+<div id="tcBackBar" style="position:sticky;top:0;z-index:65;display:flex;gap:10px;align-items:center;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:#171310;border-bottom:1px solid #3a322a"><button type="button" onclick="tcGoBack()" style="color:#ffe1a1;background:#2b241d;border:1px solid #d8a94e;border-radius:999px;padding:9px 22px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">&#8249; Back</button><a href="/app/" style="color:#f5ead9;text-decoration:none;font-weight:600;font-size:15px;border:1px solid #6b543a;border-radius:999px;padding:9px 20px">Home</a></div><script>function tcGoBack(){try{var r=document.referrer;if(r&&new URL(r).origin===window.location.origin){window.history.back();return;}}catch(e){}window.location.href="/app/";}</script>
+
+<div id="agegate" role="dialog" aria-modal="true" aria-labelledby="ag-title">
+  <div class="box">
+    <h2 id="ag-title">Are you 21 or older?</h2>
+    <p>TrustedCigar is a price and retailer-rating resource for adults of legal smoking age. We do not sell cigars.</p>
+    <button id="ag-yes">Yes, enter</button>
+    <button class="no" id="ag-no">No</button>
+    <p class="ev" id="ag-msg"></p>
+  </div>
+</div>
+
+<header class="site">
+  <div class="wrap">
+    <div class="brand">
+      <div class="mark">✓</div>
+      <div class="name">Trusted<b>Cigar</b></div>
+    </div>
+    <nav class="main">
+      <a href="/trust-index.html">Retailer Trust Index</a>
+      <a href="/scanner/">Scanner</a>
+      <a href="/chart/">The weekly chart</a>
+      <a href="/ask/">Ask Cubichi</a>
+    </nav>
+  </div>
+</header>
+
+<main class="survey-wrap">
+  <h1>The 1,000 Smoker Survey</h1>
+
+  <div class="counter-card" aria-live="polite">
+    <div class="counter-num"><span id="countNow">78</span></div>
+    <div class="counter-of">of 1,000 smokers surveyed</div>
+    <div class="counter-bar"><div class="counter-fill" id="countFill" style="width:7.8%"></div></div>
+    <div class="counter-label">Answers so far across our polls and this survey</div>
+  </div>
+
+  <div class="why">
+    <p><strong>Why 1,000?</strong> We put two simple questions in front of thousands of cigar smokers this week. Seventy-eight answered. We are stats people: 78 answers is an anecdote, not a statistic, and we will not publish conclusions on an anecdote.</p>
+    <p>At 1,000 answers the numbers start to mean something. When the counter reaches 1,000, the full results go public, right here, for everyone. Until then the counter shows exactly where things stand. No rounding, no spin.</p>
+    <p>Two questions. Under a minute.</p>
+  </div>
+
+  <form id="surveyForm" novalidate>
+    <p class="err" id="formErr">Please answer both questions so your survey counts.</p>
+
+    <fieldset class="q">
+      <legend>1. When you buy cigars online, what matters most?</legend>
+      <label class="opt"><input type="radio" name="q1" value="price"><span class="t">Price</span></label>
+      <label class="opt"><input type="radio" name="q1" value="fees"><span class="t">No surprise fees at checkout</span></label>
+      <label class="opt"><input type="radio" name="q1" value="shipping"><span class="t">Fast shipping</span></label>
+      <label class="opt"><input type="radio" name="q1" value="service"><span class="t">Service when something goes wrong</span></label>
+      <label class="opt"><input type="radio" name="q1" value="stock"><span class="t">In stock when I want it</span></label>
+    </fieldset>
+
+    <fieldset class="q">
+      <legend>2. Where do you buy most of your cigars?</legend>
+      <label class="opt"><input type="radio" name="q2" value="one_store"><span class="t">One online store, mostly</span></label>
+      <label class="opt"><input type="radio" name="q2" value="few_stores"><span class="t">A few online stores</span></label>
+      <label class="opt"><input type="radio" name="q2" value="lounge"><span class="t">My local lounge</span></label>
+      <label class="opt"><input type="radio" name="q2" value="mix"><span class="t">A mix of everything</span></label>
+    </fieldset>
+
+    <div class="prize">
+      <h3>The drawing</h3>
+      <p>Everyone who completes this survey by <strong>Tuesday, November 24 at 8:00 PM ET</strong> is entered to win a <strong>$100 Cigar Page gift certificate</strong>. One entry per person. The winner is announced on the TrustedCigar page.</p>
+      <div class="emailrow">
+        <label for="entryEmail">Email for the drawing (optional, only used to reach the winner)</label>
+        <input type="email" id="entryEmail" name="email" autocomplete="email" placeholder="you@example.com">
+      </div>
+      <p>Your answers count either way. The email is only for the drawing.</p>
+    </div>
+
+    <button class="submitbtn" id="submitBtn" type="submit">Count my answers</button>
+    <p class="fineprint">Run by TrustedCigar. Not sponsored by Meta, Facebook, or Cigar Page. Answers are reported only in aggregate when the survey reaches 1,000.</p>
+  </form>
+
+  <div class="thanks" id="thanksCard">
+    <h2>You are in.</h2>
+    <p>Your answers are counted. Watch the counter: when it reaches 1,000, the full results go public here.</p>
+    <p>Next milestone: 250. You will hear from us when we cross it, or at Tuesday's drawing, whichever comes first.</p>
+  </div>
+</main>
+
+<script>
+// LIVE BUILD (wired Nov 17, 2026 on Tomás' go). SURVEY_API points at the
+// survey routes on the trustedcigar-band-vision Worker (KV-backed counter,
+// same Worker as the scanner/Ask Cubichi). If SURVEY_API were emptied, the
+// page would render with the seed count and submissions would NOT be
+// recorded; the thank-you card would be shown locally only.
+var SURVEY_API = "https://trustedcigar-band-vision.tomas-gregorio.workers.dev/survey";
+var SEED_COUNT = 78;
+function renderCount(n){
+  document.getElementById('countNow').textContent = n.toLocaleString('en-US');
+  document.getElementById('countFill').style.width = Math.min(100, n/10) + '%';
+}
+renderCount(SEED_COUNT);
+if (SURVEY_API) {
+  fetch(SURVEY_API + '/count').then(function(r){return r.json();}).then(function(d){
+    if (d && typeof d.count === 'number') renderCount(d.count);
+  }).catch(function(){});
+}
+document.getElementById('surveyForm').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var q1 = document.querySelector('input[name="q1"]:checked');
+  var q2 = document.querySelector('input[name="q2"]:checked');
+  var err = document.getElementById('formErr');
+  if (!q1 || !q2) { err.style.display = 'block'; err.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  err.style.display = 'none';
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Counting...';
+  var payload = { q1: q1.value, q2: q2.value, email: document.getElementById('entryEmail').value || '' };
+  function done(){
+    document.getElementById('surveyForm').style.display = 'none';
+    var t = document.getElementById('thanksCard'); t.style.display = 'block';
+    t.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  if (!SURVEY_API) { done(); return; }
+  fetch(SURVEY_API + '/submit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+    .then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); })
+    .then(function(d){ if (d && typeof d.count === 'number') renderCount(d.count); done(); })
+    .catch(function(){ btn.disabled = false; btn.textContent = 'Count my answers'; err.textContent = 'Something went wrong sending that. Please try once more.'; err.style.display = 'block'; });
+});
+</script>
+<script src="/agegate.js"></script>
+</body>
+</html>
