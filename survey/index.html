@@ -179,7 +179,19 @@ document.getElementById('surveyForm').addEventListener('submit', function(ev){
     .catch(function(){ btn.disabled = false; btn.textContent = 'Count my answers'; err.textContent = 'Something went wrong sending that. Please try once more.'; err.style.display = 'block'; });
 });
 </script>
-<script src="/agegate.js"></script>
+<script>
+(function(){
+  var gate=document.getElementById('agegate');
+  try{ if(sessionStorage.getItem('tc-age')==='1'){ gate.style.display='none'; } }catch(e){}
+  document.getElementById('ag-yes').addEventListener('click',function(){
+    try{ sessionStorage.setItem('tc-age','1'); }catch(e){}
+    gate.style.display='none';
+  });
+  document.getElementById('ag-no').addEventListener('click',function(){
+    document.getElementById('ag-msg').textContent='Sorry \u2014 this resource is for adults 21 and older.';
+  });
+})();
+</script>
 <script type="text/javascript" src="https://cdn.ywxi.net/js/1.js" async></script>
 </body>
 </html>
