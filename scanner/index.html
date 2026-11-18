@@ -1186,23 +1186,42 @@ function tcAlertsUi(){
  try{if(localStorage.getItem("tc_push_sub")&&("Notification" in window)&&Notification.permission==="granted")tcPushSubscribe()}catch(e){}
  tcBadgeSync();
 })();
+function tcHistKey(en){
+ if(en&&en.brand)return "c|"+norm(en.brand)+"|"+norm(en.line||"")+"|"+norm(en.vitola||"");
+ return "m|"+(en.mode||"")+"|"+(en.code||"")+"|"+norm(en.text||"");
+}
 function tcShowSnapshot(en){
  if(!en)return;
- if(en.miss&&!en.found){
-  if(en.brand){pickLine({brand:en.brand,line:en.line});setStatus("<b>Still hunting.</b> No verified price yet for that cigar — it's on our list, and this history entry fills in the day we land one.")}
-  else setStatus("<b>Still hunting.</b> That scan is on our list; the day we can price or place it, this entry fills in.");
-  return;
- }
  collapseToVerdict();
  var v=document.getElementById("verdict"); v.style.display="block";
- var lo=Math.min.apply(null,en.prices.map(function(p){return p.per_stick})), hi=Math.max.apply(null,en.prices.map(function(p){return p.per_stick}));
- var rows=en.prices.map(function(p){return "<tr><td>"+esc(p.vendor)+"</td><td>$"+Number(p.per_stick).toFixed(2)+" / stick</td><td class='small'>As of "+tcFmtDate(en.ts)+"</td></tr>"}).join("");
- v.innerHTML="<button id='btnHistBack' class='secondary' style='width:auto;margin:0 0 10px;padding:8px 16px'>&#8249; Back to history</button>"+
- "<div class='name'>"+esc(en.brand)+" "+esc(en.line||"")+" — "+esc(en.vitola||"")+"</div>"+
- "<div class='meta'>From your history — scanned "+tcFmtDate(en.ts)+"</div>"+
- "<p><b>Prices when you scanned: $"+lo.toFixed(2)+" – $"+hi.toFixed(2)+" per stick</b> across "+en.prices.length+" trust-cleared retailer"+(en.prices.length>1?"s":"")+".</p>"+
- "<table><tr><th>Retailer</th><th>Per-stick</th><th>Freshness</th></tr>"+rows+"</table>"+
- "<button id='btnHistNow' class='secondary'>Check today's prices</button>";
+ var list=tcHistLoad(), key=tcHistKey(en);
+ var scans=list.filter(function(o){return tcHistKey(o)===key});
+ var nameHtml=en.brand?esc(en.brand)+" "+esc(en.line||"")+" — "+esc(en.vitola||""):(en.mode==="barcode"?"Barcode "+esc(en.code||""):(en.text?"Band read: "+esc(String(en.text).slice(0,44)):"Unidentified band"));
+ var html="<button id='btnHistBack' class='secondary' style='width:auto;margin:0 0 10px;padding:8px 16px'>&#8249; Back to history</button>"+
+ (en.thumb?"<img src='"+en.thumb+"' alt='' style='width:72px;height:72px;object-fit:cover;border-radius:10px;float:right;margin:0 0 8px 10px'>":"")+
+ "<div class='name'>"+nameHtml+"</div>"+
+ "<div class='meta'>From your history — scanned "+tcFmtDate(en.ts)+"</div>";
+ if(en.prices&&en.prices.length){
+  var lo=Math.min.apply(null,en.prices.map(function(p){return p.per_stick})), hi=Math.max.apply(null,en.prices.map(function(p){return p.per_stick}));
+  var rows=en.prices.map(function(p){return "<tr><td>"+esc(p.vendor)+"</td><td>$"+Number(p.per_stick).toFixed(2)+" / stick</td><td class='small'>As of "+tcFmtDate(en.ts)+"</td></tr>"}).join("");
+  html+="<p><b>"+(en.found?"Found since your scan: ":"Prices when you scanned: ")+"$"+lo.toFixed(2)+" – $"+hi.toFixed(2)+" per stick</b> across "+en.prices.length+" trust-cleared retailer"+(en.prices.length>1?"s":"")+".</p>"+
+  "<table><tr><th>Retailer</th><th>Per-stick</th><th>Freshness</th></tr>"+rows+"</table>";
+ } else if(en.miss&&en.prof){
+  html+="<p>"+esc([en.prof.strength,en.prof.wrapper,en.prof.origin].filter(Boolean).join(" · "))+(en.prof.notes?" — "+esc(en.prof.notes):"")+"</p>"+
+  "<p><b>Still hunting.</b> No verified price yet for that cigar — it's on our list, and this history entry fills in the day we land one.</p>";
+ } else {
+  html+="<p><b>Still hunting.</b> No verified price yet for that cigar — it's on our list, and this history entry fills in the day we land one.</p>";
+ }
+ if(scans.length>1){
+  html+="<div style='margin-top:14px'><b>Your scans of this cigar ("+scans.length+")</b>"+
+  scans.map(function(o){
+   var line;
+   if(o.prices&&o.prices.length)line=o.prices.map(function(p){return esc(p.vendor)+": $"+Number(p.per_stick).toFixed(2)}).join(" · ");
+   else line="Not priced yet — we're hunting it.";
+   return "<div style='padding:8px 0;border-top:1px solid #eee2c8'><div class='small'><b>"+tcFmtDate(o.ts)+"</b>"+(o.ts===en.ts?" · this scan":"")+"</div><div class='small'>"+line+"</div></div>"}).join("")+"</div>";
+ }
+ html+="<button id='btnHistNow' class='secondary'>Check today's prices</button>";
+ v.innerHTML=html;
  v.scrollIntoView({behavior:"smooth"});
  document.getElementById("btnHistBack").addEventListener("click",function(){
   v.style.display="none";
@@ -1213,7 +1232,7 @@ function tcShowSnapshot(en){
  document.getElementById("btnHistNow").addEventListener("click",function(){
   var rec=null;
   for(var i=0;i<DATA.length;i++){var c=DATA[i]; if(norm(c.brand)===norm(en.brand)&&norm(c.line)===norm(en.line)&&norm(c.vitola||"")===norm(en.vitola||"")){rec=c;break}}
-  if(rec){window.__tcNoPing=true;showVerdict({brand:en.brand,line:en.line},en.vitola,rec)} else {pickLine({brand:en.brand,line:en.line})}
+  if(rec){window.__tcNoPing=true;showVerdict({brand:en.brand,line:en.line},en.vitola,rec)} else if(en.brand){pickLine({brand:en.brand,line:en.line}); if(en.miss)setStatus("<b>Still hunting.</b> No verified price yet for that cigar — it's on our list, and this history entry fills in the day we land one.")} else {setStatus("<b>Still hunting.</b> That scan is on our list; the day we can price or place it, this entry fills in.")}
  });
 }
 (function(){

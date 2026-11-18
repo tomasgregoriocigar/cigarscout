@@ -195,18 +195,57 @@ if("serviceWorker" in navigator){
  var list=[]; try{list=JSON.parse(localStorage.getItem("tc_history_v1")||"[]")}catch(e){}
  function es(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
  if(cnt)cnt.textContent=list.length?" · "+list.length+" saved":"";
+ function fmtD(ts){var d=""; try{d=new Date(ts).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"})}catch(e){} return d}
+ function normS(s){return String(s==null?"":s).toLowerCase().replace(/[^a-z0-9]+/g," ").trim()}
+ function histKey(en){
+  if(en.brand)return "c|"+normS(en.brand)+"|"+normS(en.line||"")+"|"+normS(en.vitola||"");
+  return "m|"+(en.mode||"")+"|"+(en.code||"")+"|"+normS(en.text||"");
+ }
+ function nmOf(en){
+  if(en.brand)return es(en.brand)+" "+es(en.line||"")+(en.vitola?" — "+es(en.vitola):"");
+  if(en.mode==="barcode")return "Barcode "+es(en.code||"");
+  if(en.text)return "Band read: "+es(String(en.text).slice(0,44));
+  return "Unidentified band";
+ }
+ function priceLines(en){
+  return (en.prices||[]).map(function(p){return "<p class='ev' style='margin:2px 0 0'>"+es(p.vendor)+": <b>$"+Number(p.per_stick).toFixed(2)+"</b> / stick</p>"}).join("");
+ }
+ function statusHtml(en){
+  if(en.prices&&en.prices.length)return (en.found?"<p class='ev' style='margin:2px 0 0'><b>Found since your scan</b></p>":"")+priceLines(en);
+  if(en.miss&&en.prof)return "<p class='ev' style='margin:2px 0 0'>"+es([en.prof.strength,en.prof.wrapper,en.prof.origin].filter(Boolean).join(" · "))+(en.prof.notes?" — "+es(en.prof.notes):"")+"</p><p class='ev' style='margin:2px 0 0'>Still hunting a verified price.</p>";
+  return "<p class='ev' style='margin:2px 0 0'>Not priced yet — we're hunting it. It fills in here the day we land a verified price.</p>";
+ }
  function render(){
   if(!list.length){body.innerHTML="<div class='card'><p class='ev' style='margin:0'>No scans yet on this phone. Scan a cigar and it lands here — with the prices it saw, date-stamped. Free history holds your last 5; members keep every scan, unlimited.</p></div>";return}
-  body.innerHTML=list.map(function(en){
+  body.innerHTML=list.map(function(en,i){
    var pr=(en.prices||[]).map(function(p){return es(p.vendor)+": $"+Number(p.per_stick).toFixed(2)}).join(" · ");
    if(en.miss&&!en.found)pr="Not priced yet — we're hunting it. It fills in here the day we land a verified price.";
    else if(en.found)pr="Found since your scan · "+pr;
-   var d=""; try{d=new Date(en.ts).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"})}catch(e){}
-   return "<a href='/scanner/' style='text-decoration:none;color:inherit'><div class='card' style='display:flex;gap:10px;align-items:center'>"+
+   return "<div class='card appHistRow' data-i='"+i+"' style='display:flex;gap:10px;align-items:center;cursor:pointer'>"+
     (en.thumb?"<img src='"+en.thumb+"' alt='' style='width:44px;height:44px;object-fit:cover;border-radius:8px'>":"")+
-    "<div><h3 style='margin:0'>"+es(en.brand)+" "+es(en.line||"")+(en.vitola?" — "+es(en.vitola):"")+"</h3>"+
-    "<p class='ev' style='margin:4px 0 0'>"+d+"</p><p class='ev' style='margin:2px 0 0'>"+pr+"</p></div></div></a>"}).join("")+
-   "<p class='sub' style='margin-top:8px'>Tap a scan to reopen it in the scanner. Free history holds your last 5 on this phone; members keep every scan, unlimited.</p>";
+    "<div><h3 style='margin:0'>"+nmOf(en)+"</h3>"+
+    "<p class='ev' style='margin:4px 0 0'>"+fmtD(en.ts)+"</p><p class='ev' style='margin:2px 0 0'>"+pr+"</p></div></div>"}).join("")+
+   "<p class='sub' style='margin-top:8px'>Tap a scan to see the prices it saw, and every scan of that cigar on this phone. Free history holds your last 5 on this phone; members keep every scan, unlimited.</p>";
+  Array.prototype.forEach.call(body.querySelectorAll(".appHistRow"),function(row){row.addEventListener("click",function(){renderDetail(Number(row.getAttribute("data-i")))})});
+ }
+ function renderDetail(i){
+  var en=list[i]; if(!en)return;
+  var key=histKey(en);
+  var scans=list.filter(function(o){return histKey(o)===key});
+  var h="<div style='margin:2px 0 10px'><button type='button' id='appHistDetailBack' style='color:#ffe1a1;background:#2b241d;border:1px solid #d8a94e;border-radius:999px;padding:9px 22px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit'>&#8249; Back</button></div>";
+  h+="<div class='card'>"+
+   (en.thumb?"<img src='"+en.thumb+"' alt='' style='width:72px;height:72px;object-fit:cover;border-radius:10px;float:right;margin:0 0 8px 10px'>":"")+
+   "<h3 style='margin:0'>"+nmOf(en)+"</h3>"+
+   "<p class='ev' style='margin:4px 0 0'>Scanned "+fmtD(en.ts)+"</p>"+statusHtml(en)+"</div>";
+  if(scans.length>1){
+   h+="<div class='card' style='margin-top:10px'><h3 style='margin:0 0 6px'>Every scan of this cigar — "+scans.length+" on this phone</h3>"+
+    scans.map(function(o){
+     return "<div style='padding:8px 0;border-top:1px solid #eee2c8'><p class='ev' style='margin:0'><b>"+fmtD(o.ts)+"</b>"+(o.ts===en.ts?" · this scan":"")+"</p>"+statusHtml(o)+"</div>"}).join("")+"</div>";
+  }
+  h+="<p class='sub' style='margin-top:8px'><a href='/scanner/'>Open the scanner</a> to check today's prices for this cigar.</p>";
+  body.innerHTML=h;
+  var bk=document.getElementById("appHistDetailBack");
+  if(bk)bk.addEventListener("click",function(){render();btn.scrollIntoView({block:"start"})});
  }
  btn.addEventListener("click",function(){var open=body.style.display!=="none";body.style.display=open?"none":"block";if(!open)render()});
 })();
