@@ -121,11 +121,6 @@ fieldset.q legend{font-size:21px;font-weight:700;padding:0 6px}
     <div class="prize">
       <h3>The drawing</h3>
       <p>Everyone who completes this survey by <strong>Tuesday, November 24 at 8:00 PM ET</strong> is entered to win a <strong>$100 Cigar Page gift certificate</strong>. One entry per person. The winner is announced on the TrustedCigar page.</p>
-      <div class="emailrow">
-        <label for="entryEmail">Email for the drawing (optional, only used to reach the winner)</label>
-        <input type="email" id="entryEmail" name="email" autocomplete="email" placeholder="you@example.com">
-      </div>
-      <p>Your answers count either way. The email is only for the drawing.</p>
     </div>
 
     <button class="submitbtn" id="submitBtn" type="submit">Count my answers</button>
@@ -166,7 +161,7 @@ document.getElementById('surveyForm').addEventListener('submit', function(ev){
   err.style.display = 'none';
   var btn = document.getElementById('submitBtn');
   btn.disabled = true; btn.textContent = 'Counting...';
-  var payload = { q1: q1.value, q2: q2.value, email: document.getElementById('entryEmail').value || '' };
+  var payload = { q1: q1.value, q2: q2.value, email: '' };
   function done(){
     document.getElementById('surveyForm').style.display = 'none';
     var t = document.getElementById('thanksCard'); t.style.display = 'block';
