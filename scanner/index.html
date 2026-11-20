@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"><title>TrustedCigar Scanner</title>
 <style>
 :root{--bg:#171310;--panel:#221c17;--panel2:#2b241d;--ink:#f3ead9;--muted:#b8a98f;--gold:#d9a441;--green:#57c46a;--red:#e2604d;--line:#3a322a}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:calc(14px + env(safe-area-inset-top)) 16px calc(84px + env(safe-area-inset-bottom))}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:calc(14px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom))}
 h1{font-size:21px;margin:0}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--green);margin-right:8px}
 .sub{color:var(--muted);font-size:14px;margin-top:5px;line-height:1.45}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:14px}
@@ -39,7 +39,6 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 #scanAgainBar button{margin-top:0;box-shadow:0 4px 18px rgba(0,0,0,.5)}
 </style></head><body>
 <div id="tcBackBar" style="display:flex;gap:10px;align-items:center;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:#171310;border-bottom:1px solid #3a322a"><button type="button" onclick="tcGoBack()" style="color:#ffe1a1;background:#2b241d;border:1px solid #d8a94e;border-radius:999px;padding:9px 22px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">&#8249; Back</button><a href="/app/" style="color:#f5ead9;text-decoration:none;font-weight:600;font-size:15px;border:1px solid #6b543a;border-radius:999px;padding:9px 20px">Home</a></div><script>function tcGoBack(){try{var r=document.referrer;if(r&&new URL(r).origin===window.location.origin){window.history.back();return;}}catch(e){}window.location.href="/app/";}</script>
-<div style="position:sticky;top:calc(4px + env(safe-area-inset-top));z-index:60;margin:0 0 10px"><a href="/app/" style="display:inline-block;color:#ffe1a1;background:#2b241d;text-decoration:none;font-weight:700;border:1px solid #d8a94e;border-radius:999px;padding:8px 18px;box-shadow:0 4px 14px rgba(0,0,0,.45)">&#8249; Home</a></div>
 <header><h1><span class="dot"></span>TrustedCigar Scanner</h1>
 <div class="sub">Check a cigar before you buy it. Start with the band: photograph it and get the verdict — today's verified price per stick across retailers that meet the Standard (Neptune Cigar, Best Cigar Prices, Cigar Page, Smoke Inn) — read from the retailer's own page, never guessed. Two bands on the stick? Photograph each one — every band adds evidence. A band photo is sent to our vision reader for the read and is never kept by us — a small copy stays on your phone only, for your own scan history. No account. We count successful scans in aggregate, no name attached, to learn which cigars smokers reach for and price those first. Stock status is shown only for paying partner retailers; there are none yet, so no stock status appears. A cigar with no verified price reads “not found.”</div></header>
 
@@ -119,8 +118,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-17.1 -->
-<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-17.1</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-19.2 -->
+<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-19.2</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -268,7 +267,7 @@ function tcPingHit(brand,line,vitola,priced){
     daily counts; the daily catcher report reads them back so the true
     scan-weighted priced rate replaces the catalogue-wide proxy. */
  try{
-  fetch("https://trustedcigar-band-vision.tomas-gregorio.workers.dev/hit",{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:brand||"",line:line||"",vitola:vitola||"",priced:!!priced})}).catch(function(){});
+  fetch("https://trustedcigar-band-vision.gregoriodigital.workers.dev/hit",{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:brand||"",line:line||"",vitola:vitola||"",priced:!!priced})}).catch(function(){});
  }catch(e){}
 }
 function showVerdict(L,vitola,c){
@@ -538,6 +537,18 @@ function matchBand(texts){
 var bandCands=[],bandIdx=0,bandText="";
 var bandPool=null,bandOcrTexts=[],bandMoreMode=false;
 function showBandCard(){clearResultCards("bandCard");$("bandCard").style.display="block";$("bandCard").scrollIntoView({behavior:"smooth",block:"center"})}
+/* Scanner V2: brand-level candidate (band names the brand, no line).
+   Lists the brand's priced lines in the vitola card; each line then
+   runs the normal vitola picker. */
+function pickBrandLines(brand){
+ clearResultCards("vitolaCard");
+ var card=document.getElementById("vitolaCard"); card.style.display="block"; var el=document.getElementById("vitolaList"); el.innerHTML="";
+ var lines={},order=[];
+ DATA.forEach(function(c){if(norm(c.brand)===norm(brand)){var k=norm(c.brand)+"||"+norm(c.line); if(!lines[k]){lines[k]={brand:c.brand,line:c.line};order.push(k)}}});
+ if(!order.length){el.innerHTML="<div class='small'>No priced cigar is recorded for this brand yet.</div>"}
+ order.slice(0,40).forEach(function(k){var L=lines[k];var b=document.createElement("button");b.className="secondary";b.textContent=L.brand+(L.line?" — "+L.line:"");b.addEventListener("click",function(){pickLine(L)});el.appendChild(b)});
+ card.scrollIntoView({behavior:"smooth"});
+}
 function renderBandCandidate(){
  var c=bandCands[bandIdx];if(!c)return;
  collapseEfforts();
@@ -546,7 +557,9 @@ function renderBandCandidate(){
  var pill=$("bPill");pill.style.display="inline-block";
  pill.className="pill "+(c.conf==="strong"?"good":"known");
  pill.textContent=(c.conf==="strong"?"Strong match":"Possible match")+" · band read: "+c.matched.join(" ");
- $("bLines").innerHTML="Is that the cigar in your hand? If it is, pick its vitola and we'll show the price verdict.";
+ $("bLines").innerHTML=c.brandOnly
+  ?"That band names the brand but no line. Is that the brand in your hand? If it is, pick its line and we'll show the price verdict."
+  :"Is that the cigar in your hand? If it is, pick its vitola and we'll show the price verdict.";
  $("bBtns").style.display="flex";
  $("bMoreRow").style.display="block";
  showBandCard();
@@ -682,7 +695,7 @@ function finishBandPooled(texts){
   if(added){bandIdx=0;renderBandCandidate()}
  }
 }
-var VISION_ENDPOINT="https://trustedcigar-band-vision.tomas-gregorio.workers.dev/identify";
+var VISION_ENDPOINT="https://trustedcigar-band-vision.gregoriodigital.workers.dev/identify";
 /* Missed-scan catcher (owner order, Nov 8, 2026): every terminal miss —
    a verdict with no price, a band that won't place, a barcode we don't
    hold, an empty search — is reported to the vision Worker's /miss
@@ -694,7 +707,7 @@ function reportMiss(mode,brand,line,vitola,code){
  try{
   window.__tcLastMiss={mode:mode,brand:String(brand||"").slice(0,80),line:String(line||"").slice(0,120),vitola:String(vitola||"").slice(0,60),code:String(code||"").slice(0,24)};
   var member=""; try{member=localStorage.getItem("tc_member_email")||""}catch(e){}
-  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-17.1"})}).catch(function(){});
+  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-19.2"})}).catch(function(){});
   setTimeout(maybeMissPrompt,400);
  }catch(e){}
 }
@@ -730,7 +743,7 @@ function missPromptSubmit(){
   try{localStorage.setItem("tc_member_email",email);localStorage.setItem("tc_subscribed","1")}catch(e){}
   var lm=window.__tcLastMiss;
   if(lm){
-   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-17.1"})}).catch(function(){});
+   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-19.2"})}).catch(function(){});
   }
   var body=document.getElementById("missPromptBody");
   if(body)body.innerHTML="<div style='font-weight:700;font-size:19px;margin-bottom:8px'>You're in.</div><div class='small' style='font-size:15px;line-height:1.5'>We will email you the price as soon as we find it. It will be in your History box too.</div><div style='margin-top:14px'><button class='btn' type='button' onclick='missPromptClose()'>Done</button></div>";
@@ -756,12 +769,19 @@ function visionCandidates(resp){
    if(nl&&nl.indexOf(nb)===0)nl=nl.slice(nb.length).trim();
    for(i=0;i<NAME_INDEX.length;i++){if(norm(NAME_INDEX[i].brand)===nb&&norm(NAME_INDEX[i].line)===nl){e=NAME_INDEX[i];break}}
    if(!e&&nl){for(i=0;i<NAME_INDEX.length;i++){var y=NAME_INDEX[i];if(norm(y.brand)===nb&&(norm(y.line).indexOf(nl)>=0||nl.indexOf(norm(y.line))>=0)){e=y;break}}}
-   if(!e){var bl=NAME_INDEX.filter(function(z){return norm(z.brand)===nb});if(bl.length===1)e=bl[0]}
+   if(!e){var bl=NAME_INDEX.filter(function(z){return norm(z.brand)===nb});if(bl.length===1)e=bl[0]
+    /* Scanner V2 (2026-11-19): a brand-only read (the band
+       names the brand and NO line — the El Mago band is exactly this)
+       used to resolve to NOTHING when the brand had more than one
+       line, so a correct "El Mago" vision answer fell through to the
+       OCR reader and failed. It now resolves to a brand-level
+       candidate; the shopper picks the line, then the vitola. */
+    else if(bl.length>1&&!nl){e={brand:bl[0].brand,line:"",tokens:Object.keys(bl[0].brandToks||{}),brandOnly:true}}}
    if(!e&&/original/i.test(rawLine)){var bl2=NAME_INDEX.filter(function(z){return norm(z.brand)===nb&&norm(z.line)==="classic"});if(bl2.length===1)e=bl2[0]}
   }
   if(!e)return;
   var k=norm(e.brand)+"||"+norm(e.line);if(seen[k])return;seen[k]=1;
-  out.push({entry:e,matched:e.tokens.slice(0,4),conf:(typeof vc.confidence==="number"&&vc.confidence>=0.5)?"strong":"possible",vconf:(typeof vc.confidence==="number"?vc.confidence:null)});
+  out.push({entry:e,brandOnly:!!e.brandOnly,matched:e.tokens.slice(0,4),conf:(typeof vc.confidence==="number"&&vc.confidence>=0.5)?"strong":"possible",vconf:(typeof vc.confidence==="number"?vc.confidence:null)});
  });
  return out.slice(0,3);
 }
@@ -777,17 +797,33 @@ function mergeVision(pool,mapped){
  out.sort(function(a,b){return (b.vconf||0)-(a.vconf||0)});
  return out.slice(0,3);
 }
+/* Scanner V2 (2026-11-19): one view of a band at 1024px is
+   what lost El Mago — the brand sits small in a banner. The vision
+   reader now gets THREE views of the same band in one call: the full
+   frame at 1600px, a zoomed centre crop, and a wide banner crop,
+   each rendered from the ORIGINAL photo (never upscaled past its
+   real pixels by more than 2x). The Worker prompt tells the model
+   the views are one band. If the v2 Worker is not live yet it still
+   answers the first image only via the legacy path, so this page
+   change is safe to ship ahead of the Worker — but the crops only
+   help once the v2 Worker is deployed. */
+function tcVisionView(img,crop,targetW){
+ var W=img.naturalWidth,H=img.naturalHeight;
+ var sx=0,sy=0,sw=W,sh=H;
+ if(crop){sx=Math.round(W*crop[0]);sy=Math.round(H*crop[1]);sw=Math.round(W*(crop[2]-crop[0]));sh=Math.round(H*(crop[3]-crop[1]));}
+ var sc=Math.min(2,targetW/sw);
+ var c=document.createElement("canvas");c.width=Math.max(1,Math.round(sw*sc));c.height=Math.max(1,Math.round(sh*sc));
+ c.getContext("2d").drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);
+ return c.toDataURL("image/jpeg",0.88);
+}
 function tryVisionBand(file,done){
  loadBandImage(file,function(img,url){
   try{
-   var W=img.naturalWidth,H=img.naturalHeight,sc=Math.min(1,1024/Math.max(W,H));
-   var c=document.createElement("canvas");c.width=Math.max(1,Math.round(W*sc));c.height=Math.max(1,Math.round(H*sc));
-   c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+   var views=[tcVisionView(img,null,1600),tcVisionView(img,[0.25,0.20,0.75,0.82],1600),tcVisionView(img,[0.05,0.28,0.95,0.88],1600)];
    URL.revokeObjectURL(url);
-   var dataUrl=c.toDataURL("image/jpeg",0.85);
    var ctrl=("AbortController" in window)?new AbortController():null;
-   var to=setTimeout(function(){if(ctrl)ctrl.abort()},25000);
-   fetch(VISION_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:dataUrl}),signal:ctrl?ctrl.signal:undefined})
+   var to=setTimeout(function(){if(ctrl)ctrl.abort()},40000);
+   fetch(VISION_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({images:views,image:views[0]}),signal:ctrl?ctrl.signal:undefined})
     .then(function(r){return r.json().then(function(j){return {status:r.status,j:j}})})
     .then(function(res){
      clearTimeout(to);
@@ -884,6 +920,7 @@ $("bandUploadInput").addEventListener("change",onBandFile);
 $("btnBandYes").addEventListener("click",function(){
  var c=bandCands[bandIdx];if(!c)return;
  $("bandCard").style.display="none";
+ if(c.brandOnly){pickBrandLines(c.entry.brand);setStatus("<b>Matched from the band.</b> Pick the line in your hand, then its vitola, for the verdict.");return}
  pickLine({brand:c.entry.brand,line:c.entry.line});
  setStatus("<b>Matched from the band.</b> Pick the vitola in your hand for the verdict.");
 });
@@ -1251,7 +1288,6 @@ function tcShowSnapshot(en){
  tcRenderHistory();
 })();
 </script>
-<div style="position:fixed;left:0;right:0;bottom:0;z-index:70;background:rgba(23,19,16,.94);border-top:1px solid #3a322a;padding:10px 16px calc(10px + env(safe-area-inset-bottom));text-align:center"><a href="/app/" style="display:inline-block;color:#ffe1a1;background:#2b241d;text-decoration:none;font-weight:700;font-size:16px;border:1px solid #d8a94e;border-radius:999px;padding:11px 34px;box-shadow:0 4px 14px rgba(0,0,0,.45)">&#8249; Home</a></div>
 <div id="missPrompt" style="display:none;position:fixed;inset:0;z-index:90;background:rgba(10,7,5,.72);align-items:center;justify-content:center;padding:18px">
 <div id="missPromptBody" style="background:#241a12;border:1px solid #d8a94e;border-radius:14px;max-width:420px;width:100%;padding:20px;color:#f5ead9;box-shadow:0 10px 34px rgba(0,0,0,.55)">
 <div style="font-weight:700;font-size:19px;margin-bottom:8px">We're hunting it down</div>
@@ -1261,5 +1297,14 @@ function tcShowSnapshot(en){
 <div style="margin-top:10px"><button class="secondary" type="button" onclick="missPromptClose()">No thanks</button></div>
 </div>
 </div>
-<script type="text/javascript" src="https://cdn.ywxi.net/js/1.js" async></script>
+<!-- Scanner V2 UI fix (2026-11-19): the TrustedSite seal script
+     (cdn.ywxi.net) is NOT loaded on the scanner page. It injects a
+     floating badge at the bottom-right of the viewport that sat on
+     top of the photo/result buttons (Tomás' Nov 19 El Mago Night
+     screenshots). The seal still loads on the homepage and the other
+     site pages; the scanner is an app surface and keeps exactly one
+     navigation control, the Back/Home bar at the top. The duplicate
+     sticky Home pill and the fixed bottom Home bar were also removed
+     for the same reason: three floating Home controls, two of them
+     overlaying content, is what "the check screen is broken" was. -->
 </body></html>
