@@ -329,7 +329,7 @@ if("serviceWorker" in navigator){
       }
       var ctrl=('AbortController' in window)?new AbortController():null;
       var to=ctrl?setTimeout(function(){ctrl.abort();},15000):null;
-      fetch('https://trustedcigar-band-vision.tomas-gregorio.workers.dev/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q}),signal:ctrl?ctrl.signal:undefined})
+      fetch('https://trustedcigar-band-vision.gregoriodigital.workers.dev/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q}),signal:ctrl?ctrl.signal:undefined})
         .then(function(r){ if(to)clearTimeout(to); if(!r.ok) throw new Error('ask'); return r.json(); })
         .then(function(j){
           if(!j||!j.answer) throw new Error('ask');
