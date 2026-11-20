@@ -118,8 +118,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-19.2 -->
-<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-19.2</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-20.1 -->
+<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-20.1</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -555,8 +555,16 @@ function renderBandCandidate(){
  $("bName").textContent="Looks like: "+c.entry.brand+(c.entry.line?" — "+c.entry.line:"");
  $("bMeta").textContent="Matched from your band photo"+(bandIdx>0?" · next closest match":"");
  var pill=$("bPill");pill.style.display="inline-block";
- pill.className="pill "+(c.conf==="strong"?"good":"known");
- pill.textContent=(c.conf==="strong"?"Strong match":"Possible match")+" · band read: "+c.matched.join(" ");
+ /* El Mago fix (staged 2026-11-20): display guard — a vision
+    candidate may not wear the "Strong match" pill when the band
+    text on record names a catalogue brand and it is not this one. */
+ var pillConf=c.conf;
+ if(pillConf==="strong"&&c.viaVision&&bandText){
+  var tb=visTextBrands(bandText);
+  if(Object.keys(tb).length&&!tb[norm(c.entry.brand)])pillConf="possible";
+ }
+ pill.className="pill "+(pillConf==="strong"?"good":"known");
+ pill.textContent=(pillConf==="strong"?"Strong match":"Possible match")+" · band read: "+c.matched.join(" ");
  $("bLines").innerHTML=c.brandOnly
   ?"That band names the brand but no line. Is that the brand in your hand? If it is, pick its line and we'll show the price verdict."
   :"Is that the cigar in your hand? If it is, pick its vitola and we'll show the price verdict.";
@@ -707,7 +715,7 @@ function reportMiss(mode,brand,line,vitola,code){
  try{
   window.__tcLastMiss={mode:mode,brand:String(brand||"").slice(0,80),line:String(line||"").slice(0,120),vitola:String(vitola||"").slice(0,60),code:String(code||"").slice(0,24)};
   var member=""; try{member=localStorage.getItem("tc_member_email")||""}catch(e){}
-  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-19.2"})}).catch(function(){});
+  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-20.1"})}).catch(function(){});
   setTimeout(maybeMissPrompt,400);
  }catch(e){}
 }
@@ -743,7 +751,7 @@ function missPromptSubmit(){
   try{localStorage.setItem("tc_member_email",email);localStorage.setItem("tc_subscribed","1")}catch(e){}
   var lm=window.__tcLastMiss;
   if(lm){
-   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-19.2"})}).catch(function(){});
+   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-20.1"})}).catch(function(){});
   }
   var body=document.getElementById("missPromptBody");
   if(body)body.innerHTML="<div style='font-weight:700;font-size:19px;margin-bottom:8px'>You're in.</div><div class='small' style='font-size:15px;line-height:1.5'>We will email you the price as soon as we find it. It will be in your History box too.</div><div style='margin-top:14px'><button class='btn' type='button' onclick='missPromptClose()'>Done</button></div>";
@@ -758,14 +766,72 @@ function visBrandVariants(s){
  m.forEach(function(p){var v=norm(p.replace(/[()]/g," "));if(v&&out.indexOf(v)<0)out.push(v)});
  return out;
 }
+/* El Mago fix (staged 2026-11-20): text-anchor guard helpers.
+   The vision reader returns readable_text — the words it could
+   actually read on the band — alongside its candidate guesses. On
+   2026-11-20 the reader named the band's text "EL MAGO EST 1965" in
+   three straight scans of the same El Mago band, yet in two of them
+   its top candidate carried a hallucinated brand (Espinosa, Ezra
+   Zion) with the TRUE brand stuffed into the line field. The page
+   resolved brand X + line "El Mago" to brand X's empty-line entry
+   (the contains-match treats an empty catalogue line as a substring
+   of any read line) and, at confidence >= 0.5, labelled it a
+   "Strong match". The guard below cross-checks every candidate
+   against the reader's own readable_text before anything is shown. */
+function visTextBrands(rt){
+ /* Map of normalized catalogue brand -> catalogue brand spelling,
+    for every brand the readable_text actually names (whole-phrase,
+    space-padded match on the normalized text). */
+ var out={},nrt=" "+norm(rt||"")+" ",seenB={};
+ NAME_INDEX.forEach(function(e){
+  var nb=norm(e.brand);
+  if(!nb||seenB[nb])return;seenB[nb]=1;
+  if(nrt.indexOf(" "+nb+" ")>=0)out[nb]=e.brand;
+ });
+ return out;
+}
+function visLineBrand(line){
+ /* If the line field is exactly a catalogue brand name, return that
+    brand ({nb, brand}); the reader has put a brand in the line
+    field — the classic field-swap behind the El Mago failure. */
+ var nl=norm(visClean(line||""));
+ if(!nl)return null;
+ for(var i=0;i<NAME_INDEX.length;i++){
+  if(norm(NAME_INDEX[i].brand)===nl)return {nb:nl,brand:NAME_INDEX[i].brand};
+ }
+ return null;
+}
 function visionCandidates(resp){
  var out=[],seen={};
+ var textBrands=visTextBrands(resp&&resp.readable_text);
+ var hasTextBrands=Object.keys(textBrands).length>0;
  (resp.candidates||[]).forEach(function(vc){
   if(!vc||!vc.brand)return;
-  var rawLine=String(vc.line||"");
-  var variants=visBrandVariants(vc.brand),e=null,i,vi;
+  /* Build the job list for this reader candidate. Normally one job:
+     the candidate as read. When the line field names a DIFFERENT
+     catalogue brand that the readable_text itself names, the
+     line-as-brand signal outranks the read brand: a reinterpreted
+     brand-level job for that brand goes FIRST (same confidence),
+     and the as-read job is kept but may never show as "strong". */
+  var jobs=[{brand:vc.brand,line:vc.line,confidence:vc.confidence,forcePossible:false}];
+  var lb=visLineBrand(vc.line);
+  if(lb){
+   var readBrands=visBrandVariants(vc.brand).map(function(v){return norm(v)});
+   if(readBrands.indexOf(lb.nb)<0){
+    if(textBrands[lb.nb]){
+     jobs.unshift({brand:lb.brand,line:null,confidence:vc.confidence,forcePossible:false,reinterpreted:true});
+     jobs[1].forcePossible=true;
+    }else if(hasTextBrands){
+     jobs[0].forcePossible=true;
+    }
+   }
+  }
+  jobs.forEach(function(job){
+  var vc2={brand:job.brand,line:job.line,confidence:job.confidence};
+  var rawLine=String(vc2.line||"");
+  var variants=visBrandVariants(vc2.brand),e=null,i,vi;
   for(vi=0;vi<variants.length&&!e;vi++){
-   var nb=variants[vi],nl=norm(visClean(vc.line||""));
+   var nb=variants[vi],nl=norm(visClean(vc2.line||""));
    if(nl&&nl.indexOf(nb)===0)nl=nl.slice(nb.length).trim();
    for(i=0;i<NAME_INDEX.length;i++){if(norm(NAME_INDEX[i].brand)===nb&&norm(NAME_INDEX[i].line)===nl){e=NAME_INDEX[i];break}}
    if(!e&&nl){for(i=0;i<NAME_INDEX.length;i++){var y=NAME_INDEX[i];if(norm(y.brand)===nb&&(norm(y.line).indexOf(nl)>=0||nl.indexOf(norm(y.line))>=0)){e=y;break}}}
@@ -781,8 +847,19 @@ function visionCandidates(resp){
   }
   if(!e)return;
   var k=norm(e.brand)+"||"+norm(e.line);if(seen[k])return;seen[k]=1;
-  out.push({entry:e,brandOnly:!!e.brandOnly,matched:e.tokens.slice(0,4),conf:(typeof vc.confidence==="number"&&vc.confidence>=0.5)?"strong":"possible",vconf:(typeof vc.confidence==="number"?vc.confidence:null)});
+  var anchored=!!textBrands[norm(e.brand)];
+  out.push({entry:e,brandOnly:!!e.brandOnly,matched:e.tokens.slice(0,4),conf:(typeof vc2.confidence==="number"&&vc2.confidence>=0.5&&!job.forcePossible)?"strong":"possible",vconf:(typeof vc2.confidence==="number"?vc2.confidence:null),viaVision:true,textAnchor:anchored,reinterpreted:!!job.reinterpreted});
+  });
  });
+ /* Text-anchor guard: when the readable_text names a catalogue
+    brand, candidates for that brand win. Any candidate whose brand
+    the text does NOT name is demoted — it may still be offered as a
+    "possible" next-closest, but it may never be the top result and
+    never a "Strong match" while a text-anchored candidate exists. */
+ if(out.some(function(c){return c.textAnchor})){
+  out.forEach(function(c){if(!c.textAnchor)c.conf="possible"});
+  out.sort(function(a,b){return ((b.textAnchor?1:0)-(a.textAnchor?1:0))||((b.vconf||0)-(a.vconf||0))});
+ }
  return out.slice(0,3);
 }
 function mergeVision(pool,mapped){
@@ -791,10 +868,17 @@ function mergeVision(pool,mapped){
  pool.forEach(function(c){byKey[norm(c.entry.brand)+"||"+norm(c.entry.line)]=c;out.push(c)});
  mapped.forEach(function(c){
   var k=norm(c.entry.brand)+"||"+norm(c.entry.line);
-  if(byKey[k]){var p=byKey[k];var nv=Math.min(0.99,Math.max(p.vconf||0,c.vconf||0)+0.15);p.vconf=nv;p.conf=nv>=0.5?"strong":"possible"}
+  if(byKey[k]){var p=byKey[k];var nv=Math.min(0.99,Math.max(p.vconf||0,c.vconf||0)+0.15);p.vconf=nv;p.conf=nv>=0.5?"strong":"possible";if(c.textAnchor)p.textAnchor=true}
   else{byKey[k]=c;out.push(c)}
  });
- out.sort(function(a,b){return (b.vconf||0)-(a.vconf||0)});
+ /* El Mago fix (staged 2026-11-20): pooled candidates keep the
+    text-anchor guard — an anchored candidate outranks a higher-
+    confidence unanchored one, and unanchored candidates lose
+    "strong" whenever an anchored candidate is in the pool. */
+ if(out.some(function(c){return c.textAnchor})){
+  out.forEach(function(c){if(!c.textAnchor)c.conf="possible"});
+ }
+ out.sort(function(a,b){return ((b.textAnchor?1:0)-(a.textAnchor?1:0))||((b.vconf||0)-(a.vconf||0))});
  return out.slice(0,3);
 }
 /* Scanner V2 (2026-11-19): one view of a band at 1024px is

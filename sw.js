@@ -1,4 +1,4 @@
-/* TrustedCigar service worker — build 2026-11-19.2
+/* TrustedCigar service worker — build 2026-11-20.1
    Owner rule (Tomás, Nov 8, 2026): the home-screen shortcut must always
    be up to date — an installed shortcut that serves a stale build is a
    product defect. So the app shell is NETWORK-FIRST here: while online,
@@ -8,7 +8,7 @@
    deletes every older cache, evicting stale shells from installed
    phones. Cross-origin and non-GET requests are left to the browser
    untouched (analytics beacon, vision reader, OCR CDN). */
-var CACHE = "tc-2026-11-19-2";
+var CACHE = "tc-2026-11-20-1";
 var SHELL = [
   "/",
   "/app/",
