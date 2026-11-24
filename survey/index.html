@@ -86,14 +86,14 @@ fieldset.q legend{font-size:21px;font-weight:700;padding:0 6px}
   <h1>The 1,000 Smoker Survey</h1>
 
   <div class="counter-card" aria-live="polite">
-    <div class="counter-num"><span id="countNow">78</span></div>
+    <div class="counter-num"><span id="countNow">508</span></div>
     <div class="counter-of">of 1,000 smokers surveyed</div>
-    <div class="counter-bar"><div class="counter-fill" id="countFill" style="width:7.8%"></div></div>
+    <div class="counter-bar"><div class="counter-fill" id="countFill" style="width:50.8%"></div></div>
     <div class="counter-label">Answers so far across our polls and this survey</div>
   </div>
 
   <div class="why">
-    <p><strong>Why 1,000?</strong> We put two simple questions in front of thousands of cigar smokers this week. Seventy-eight answered. We are stats people: 78 answers is an anecdote, not a statistic, and we will not publish conclusions on an anecdote.</p>
+    <p><strong>Why 1,000?</strong> We put two simple questions in front of thousands of cigar smokers this week. 508 have answered so far. We are stats people: that is a strong start, not yet a statistic, and we will not publish conclusions until the numbers mean something.</p>
     <p>At 1,000 answers the numbers start to mean something. When the counter reaches 1,000, the full results go public, right here, for everyone. Until then the counter shows exactly where things stand. No rounding, no spin.</p>
     <p>Two questions. Under a minute.</p>
   </div>
@@ -130,7 +130,7 @@ fieldset.q legend{font-size:21px;font-weight:700;padding:0 6px}
   <div class="thanks" id="thanksCard">
     <h2>You are in.</h2>
     <p>Your answers are counted. Watch the counter: when it reaches 1,000, the full results go public here.</p>
-    <p>Next milestone: 250. You will hear from us when we cross it, or at Tuesday's drawing, whichever comes first.</p>
+    <p>Next milestone: 750. You will hear from us when we cross it, or at Tuesday's drawing, whichever comes first.</p>
   </div>
 </main>
 
@@ -141,17 +141,17 @@ fieldset.q legend{font-size:21px;font-weight:700;padding:0 6px}
 // page would render with the seed count and submissions would NOT be
 // recorded; the thank-you card would be shown locally only.
 var SURVEY_API = "https://trustedcigar-band-vision.gregoriodigital.workers.dev/survey";
-var SEED_COUNT = 78;
+// MANUAL COUNTER (Tomás' order, Nov 23, 2026): the page shows a hand-kept
+// combined count (this survey plus the room polls) instead of the Worker's
+// automated website-only count. Tito updates MANUAL_COUNT here as answers
+// land, through the drawing, Tuesday Nov 24, 8:00 PM ET. Submissions still
+// record to the Worker exactly as before; only the display is manual.
+var MANUAL_COUNT = 508;
 function renderCount(n){
   document.getElementById('countNow').textContent = n.toLocaleString('en-US');
   document.getElementById('countFill').style.width = Math.min(100, n/10) + '%';
 }
-renderCount(SEED_COUNT);
-if (SURVEY_API) {
-  fetch(SURVEY_API + '/count').then(function(r){return r.json();}).then(function(d){
-    if (d && typeof d.count === 'number') renderCount(d.count);
-  }).catch(function(){});
-}
+renderCount(MANUAL_COUNT);
 document.getElementById('surveyForm').addEventListener('submit', function(ev){
   ev.preventDefault();
   var q1 = document.querySelector('input[name="q1"]:checked');
@@ -170,7 +170,7 @@ document.getElementById('surveyForm').addEventListener('submit', function(ev){
   if (!SURVEY_API) { done(); return; }
   fetch(SURVEY_API + '/submit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
     .then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); })
-    .then(function(d){ if (d && typeof d.count === 'number') renderCount(d.count); done(); })
+    .then(function(d){ done(); })
     .catch(function(){ btn.disabled = false; btn.textContent = 'Count my answers'; err.textContent = 'Something went wrong sending that. Please try once more.'; err.style.display = 'block'; });
 });
 </script>
