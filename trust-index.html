@@ -18,6 +18,16 @@
 </head>
 <body>
 <div id="tcBackBar" style="position:sticky;top:0;z-index:65;display:flex;gap:10px;align-items:center;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:#171310;border-bottom:1px solid #3a322a"><button type="button" onclick="tcGoBack()" style="color:#ffe1a1;background:#2b241d;border:1px solid #d8a94e;border-radius:999px;padding:9px 22px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">&#8249; Back</button><a href="/app/" style="color:#f5ead9;text-decoration:none;font-weight:600;font-size:15px;border:1px solid #6b543a;border-radius:999px;padding:9px 20px">Home</a></div><script>function tcGoBack(){try{var r=document.referrer;if(r&&new URL(r).origin===window.location.origin){window.history.back();return;}}catch(e){}window.location.href="/app/";}</script>
+
+<div id="agegate" role="dialog" aria-modal="true" aria-labelledby="ag-title">
+  <div class="box">
+    <h2 id="ag-title">Are you 21 or older?</h2>
+    <p>TrustedCigar is a price and retailer-rating resource for adults of legal smoking age. We do not sell cigars.</p>
+    <button id="ag-yes">Yes — enter</button>
+    <button class="no" id="ag-no">No</button>
+    <p class="ev" id="ag-msg"></p>
+  </div>
+</div>
 <header class="site">
   <div class="wrap">
     <div class="brand"><div class="mark">✓</div><div class="name">Trusted<b>Cigar</b></div></div>
@@ -33,18 +43,6 @@
     <h1 style="font-size:34px">Retailer Trust Index</h1>
     <p class="sub">Founding edition — October 2026. Built from pooled public consumer evidence: Trustpilot, BBB records, Reviews.io, Knoji, complaint boards, enthusiast press, and community reputation. Where evidence is thin, we say so instead of guessing. Full pillar scores publish with the first quarterly re-score. Until they do, every status on this page is provisional, founding edition. The tiers below already follow <a href="standard.html">the Standard</a>, including its automatic Do Not Recommend.</p>
 
-    <h2 class="sec" style="margin-top:28px">Approved — meets the standard · Provisional, founding edition</h2>
-    <table class="index">
-      <tr><th>Retailer</th><th>Status</th><th>The evidence</th></tr>
-      <tr><td><strong>Cigar Page</strong></td><td><span class="badge approved">Approved</span></td>
-        <td class="ev">Consumer ratings 4.8/5 (122 reviews) and 4.5/5 (469 ratings) across rating platforms. Known frictions: occasional promo-period shipping delays and inventory discrepancies. A benchmark for honest deal pricing.<br><span style="font-size:12px">Last reviewed: November 23, 2026</span></td></tr>
-      <tr><td><strong>Neptune Cigar</strong></td><td><span class="badge approved">Approved</span></td>
-        <td class="ev">4.8/5 pooled consumer ratings; 4.86/5 across its own store reviews. Selling online since 1999. Only recurring friction found: loyalty-points redemption quirks.<br><span style="font-size:12px">Last reviewed: November 23, 2026</span></td></tr>
-      <tr><td><strong>Best Cigar Prices</strong></td><td><span class="badge approved">Approved</span></td>
-        <td class="ev">BBB Accredited with an A+ grade; 4.8/5 and 4.1/5 across consumer rating platforms. Price-match guarantee; 35-day returns.<br><span style="font-size:12px">Last reviewed: November 23, 2026</span></td></tr>
-      <tr><td><strong>Smoke Inn</strong></td><td><span class="badge limited">Provisional — limited data</span></td>
-        <td class="ev">Top pick of enthusiast press and community reputation; no Trustpilot or BBB profile exists, so confidence rests on community consensus. Disclosed policies to know: 15% restocking fee, 6% fee to cancel before shipping.<br><span style="font-size:12px">Last reviewed: November 23, 2026</span></td></tr>
-    </table>
 
     <h2 class="sec" style="margin-top:34px">Caution — read the flag before you order · Provisional, founding edition</h2>
     <table class="index">
@@ -55,8 +53,6 @@
         <td class="ev">Thin but positive-leaning evidence (4.0/5, 66 ratings). No horror stories found. Start with a small test order.<br><span style="font-size:12px">Last reviewed: November 23, 2026</span></td></tr>
       <tr><td><strong>Cigora</strong></td><td><span class="badge caution">Caution</span></td>
         <td class="ev">Mixed evidence (3.8–4.7/5 across platforms). Cigora is an e-commerce brand of Scandinavian Tobacco Group: STG&rsquo;s own careers page lists CIGORA among its North America e-commerce brands (<a href="https://careers.st-group.com/content/North-America-Commercial/?locale=en_US" target="_blank" rel="noopener">STG careers — North America Commercial</a>).<br><span style="font-size:12px">Last reviewed: November 24, 2026</span></td></tr>
-      <tr><td><strong>Gotham Cigars</strong></td><td><span class="badge caution">Caution</span> <span class="badge limited">Limited data</span></td>
-        <td class="ev">2.11/5 across a small set of reviews: cigars shipped dry without humidification, paid express shipping taking a week or more, a 20% restocking fee.<br><span style="font-size:12px">Last reviewed: November 23, 2026</span></td></tr>
     </table>
 
     <h2 class="sec" style="margin-top:34px">Not Yet Rated — evidence below the floor · Provisional, founding edition</h2>
@@ -88,6 +84,16 @@
         <td class="ev">Trustpilot 2.2★ across 111 reviews; BBB grade A−. Dried-out cigars, slow shipping, unhelpful service, returns accepted only unopened.<br><span style="font-size:12px">Last reviewed: November 24, 2026</span></td></tr>
       <tr><td><strong>Mike's Cigars</strong></td><td><span class="badge limited">Provisional — under re-review</span></td>
         <td class="ev">Trustpilot 3.0★ across 16 reviews; BBB grade A−. Orders reported not arriving, service unreachable, refunds obtained only through card disputes; cancellation and restocking fees up to 50%.<br><span style="font-size:12px">Last reviewed: November 24, 2026</span></td></tr>
+      <tr><td><strong>Cigar Page</strong></td><td><span class="badge limited">Provisional — under re-review</span></td>
+        <td class="ev">Consumer ratings by platform: DontPayFull 4.8/5 (122 reviews); Groupon 4.5/5 (469 ratings); Trustpilot 2.4/5 (27 reviews). Known frictions: occasional promo-period shipping delays and inventory discrepancies.<br><span style="font-size:12px">Last reviewed: November 24, 2026</span></td></tr>
+      <tr><td><strong>Neptune Cigar</strong></td><td><span class="badge limited">Provisional — under re-review</span></td>
+        <td class="ev">Consumer ratings by platform: DontPayFull 4.8/5 (50 ratings); 4.86/5 across 73 reviews on Neptune&rsquo;s own store site; Trustpilot 4.0/5 (12 reviews). Selling online since 1999. Only recurring friction found: loyalty-points redemption quirks.<br><span style="font-size:12px">Last reviewed: November 24, 2026</span></td></tr>
+      <tr><td><strong>Best Cigar Prices</strong></td><td><span class="badge limited">Provisional — under re-review</span></td>
+        <td class="ev">BBB Accredited with an A+ grade. Consumer ratings by platform: DontPayFull 4.8/5 (93 ratings); a further 4.1/5 (66 ratings) whose platform was not recorded. Price-match guarantee; 35-day returns.<br><span style="font-size:12px">Last reviewed: November 24, 2026</span></td></tr>
+      <tr><td><strong>Smoke Inn</strong></td><td><span class="badge limited">Provisional — under re-review</span></td>
+        <td class="ev">Top pick of enthusiast press and community reputation; no Trustpilot or BBB profile exists, so confidence rests on community consensus. Disclosed policies to know: 15% restocking fee, 6% fee to cancel before shipping.<br><span style="font-size:12px">Last reviewed: November 24, 2026</span></td></tr>
+      <tr><td><strong>Gotham Cigars</strong></td><td><span class="badge limited">Provisional — under re-review</span></td>
+        <td class="ev">Consumer ratings by platform: Reviews.io 2.11/5 (9 reviews); Bizrate 9.3/10 (623 post-delivery surveys, to be re-verified). BBB grade A+. Reported issues: cigars shipped dry without humidification, paid express shipping taking a week or more, a 20% restocking fee.<br><span style="font-size:12px">Last reviewed: November 24, 2026</span></td></tr>
     </table>
 
     <div class="note" style="margin-top:26px">
@@ -99,6 +105,19 @@
 <footer class="site"><div class="wrap">
   <p>TrustedCigar does not sell cigars. Ratings are consumer-protection information, built from the public evidence cited on this page. Adults 21+.</p>
 </div></footer>
+<script>
+(function(){
+  var gate=document.getElementById('agegate');
+  try{ if(sessionStorage.getItem('tc-age')==='1'){ gate.style.display='none'; } }catch(e){}
+  document.getElementById('ag-yes').addEventListener('click',function(){
+    try{ sessionStorage.setItem('tc-age','1'); }catch(e){}
+    gate.style.display='none';
+  });
+  document.getElementById('ag-no').addEventListener('click',function(){
+    document.getElementById('ag-msg').textContent='Sorry — this resource is for adults 21 and older.';
+  });
+})();
+</script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1a0436df2f214d81b4258178c56bba9b"}'></script><!-- End Cloudflare Web Analytics -->
 <script type="text/javascript" src="https://cdn.ywxi.net/js/1.js" async></script>
 </body>
