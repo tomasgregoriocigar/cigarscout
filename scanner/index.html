@@ -37,25 +37,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 .bandtext{margin-top:8px;font-size:13px;color:var(--muted);line-height:1.5;word-break:break-word}
 #scanAgainBar{position:sticky;top:8px;z-index:6}
 #scanAgainBar button{margin-top:0;box-shadow:0 4px 18px rgba(0,0,0,.5)}
-</style><style>
-:root{--card:#221c17;--amber:#d9a441}
-#agegate{position:fixed;inset:0;background:rgba(28,18,8,.92);display:flex;
-  align-items:center;justify-content:center;z-index:50;padding:20px}
-#agegate .box{background:var(--card);border-radius:16px;max-width:420px;padding:28px;text-align:center}
-#agegate button{background:var(--amber);color:#fff;border:none;font-size:16.5px;font-weight:700;
-  padding:12px 20px;border-radius:10px;cursor:pointer;width:100%;margin-top:10px}
-#agegate .no{background:transparent;color:var(--muted);border:1px solid var(--line)}
 </style></head><body>
 <div id="tcBackBar" style="display:flex;gap:10px;align-items:center;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:#171310;border-bottom:1px solid #3a322a"><button type="button" onclick="tcGoBack()" style="color:#ffe1a1;background:#2b241d;border:1px solid #d8a94e;border-radius:999px;padding:9px 22px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">&#8249; Back</button><a href="/app/" style="color:#f5ead9;text-decoration:none;font-weight:600;font-size:15px;border:1px solid #6b543a;border-radius:999px;padding:9px 20px">Home</a></div><script>function tcGoBack(){try{var r=document.referrer;if(r&&new URL(r).origin===window.location.origin){window.history.back();return;}}catch(e){}window.location.href="/app/";}</script>
-<div id="agegate" role="dialog" aria-modal="true" aria-labelledby="ag-title">
-  <div class="box">
-    <h2 id="ag-title">Are you 21 or older?</h2>
-    <p>TrustedCigar is a price and retailer-rating resource for adults of legal smoking age. We do not sell cigars.</p>
-    <button id="ag-yes">Yes — enter</button>
-    <button class="no" id="ag-no">No</button>
-    <p class="ev" id="ag-msg"></p>
-  </div>
-</div>
 <header><h1><span class="dot"></span>TrustedCigar Scanner</h1>
 <div class="sub">Check a cigar before you buy it. Start with the band: photograph it and get the verdict — today's verified price per stick across retailers that meet the Standard (Neptune Cigar, Best Cigar Prices, Cigar Page, Smoke Inn) — read from the retailer's own page, never guessed. Two bands on the stick? Photograph each one — every band adds evidence. A band photo is sent to our vision reader for the read and is never kept by us — a small copy stays on your phone only, for your own scan history. No account. We count successful scans in aggregate, no name attached, to learn which cigars smokers reach for and price those first. Stock status is shown only for paying partner retailers; there are none yet, so no stock status appears. A cigar with no verified price reads “not found.”</div></header>
 
@@ -72,7 +55,6 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <input id="histEmail" type="email" placeholder="you@email.com" autocomplete="email" style="width:100%;padding:12px;border-radius:10px;border:1px solid #d8c9a8;font-size:16px;margin-top:8px">
 <button id="btnHistSave" style="margin-top:8px">Save my history — join the list</button>
 <div class="small" id="histSaveMsg" style="margin-top:6px"></div>
-<div class="small" style="margin-top:10px">TrustedCigar does not sell cigars. Some links are affiliate links, disclosed site-wide; they never affect a score, a ranking, or a verdict. Adults 21+. Your email is only used to send your answer. It is never published.</div>
 <div style="margin-top:10px;border-top:1px solid #e5d9c3;padding-top:10px">
 <div class="small"><b>Found-it alerts.</b> When we price a cigar you scanned, a dot appears on your home screen icon and you get one notification. Nothing else, ever.</div>
 <button id="btnAlerts" class="secondary" style="margin-top:8px">Turn on found-it alerts</button>
@@ -90,7 +72,6 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <input id="bandInput" type="file" accept="image/*" capture="environment" style="display:none">
 <input id="bandUploadInput" type="file" accept="image/*" style="display:none">
 <div class="status" id="status">Photograph the band to start.</div>
-<div class="small" style="margin-top:10px">TrustedCigar does not sell cigars. Some links are affiliate links, disclosed site-wide; they never affect a score, a ranking, or a verdict. Adults 21+. A band photo is sent to our vision reader for the read and is never kept by us — a small copy stays on your phone only, for your own scan history.</div>
 </div>
 
 <div class="card"><div style="font-weight:700">Or type the band (brand + line)</div>
@@ -144,7 +125,6 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
 <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><input id="tcAppEmail" type="email" placeholder="you@email.com" style="flex:1;min-width:180px;padding:10px;border-radius:8px;border:1px solid #6b543a;background:#241a12;color:#f5ead9"><button id="tcAppBtn" type="button" style="width:auto;margin-top:0">Email me the app link</button></div>
 <div class="small" id="tcAppMsg" style="margin-top:6px"></div>
-<div class="small" style="margin-top:10px">TrustedCigar does not sell cigars. Some links are affiliate links, disclosed site-wide; they never affect a score, a ranking, or a verdict. Adults 21+. Your email is only used to send your answer. It is never published.</div>
 </div>
 <div id="tcAppDone" style="display:none">
 <div><b>You're on the list — the link is on its way.</b></div>
@@ -611,7 +591,7 @@ function renderBandLimit(){
  try{subbed=!!localStorage.getItem("tc_subscribed")}catch(e){}
  var html="Unfortunately, as a free service, we have a per-user limit of <b>5 successful scans a day</b>, and you've used today's five. Please come back tomorrow.<div style='margin-top:8px'>You can still type the brand or line in the search on this page. The price verdict is the same.</div>";
  if(!subbed){
-  html+="<div style='margin-top:12px'>Join the free mailing list and today's limit doubles: <b>5 more scans, right now.</b></div><div style='margin-top:8px;display:flex;gap:8px;flex-wrap:wrap'><input id='subEmail' type='email' placeholder='you@email.com' style='flex:1;min-width:180px;padding:10px;border-radius:8px;border:1px solid #6b543a;background:#241a12;color:#f5ead9'><button id='subBtn' class='btn' type='button'>Join and unlock 5 more</button></div><div id='subMsg' style='margin-top:6px'></div><div class='small' style='margin-top:8px'>TrustedCigar does not sell cigars. Some links are affiliate links, disclosed site-wide; they never affect a score, a ranking, or a verdict. Adults 21+. Your email is only used to send your answer. It is never published.</div>";
+  html+="<div style='margin-top:12px'>Join the free mailing list and today's limit doubles: <b>5 more scans, right now.</b></div><div style='margin-top:8px;display:flex;gap:8px;flex-wrap:wrap'><input id='subEmail' type='email' placeholder='you@email.com' style='flex:1;min-width:180px;padding:10px;border-radius:8px;border:1px solid #6b543a;background:#241a12;color:#f5ead9'><button id='subBtn' class='btn' type='button'>Join and unlock 5 more</button></div><div id='subMsg' style='margin-top:6px'></div>";
  }
  $("bLines").innerHTML=html;
  $("bBtns").style.display="none";
@@ -1398,7 +1378,6 @@ function tcShowSnapshot(en){
 <div class="small" style="font-size:15px;line-height:1.5">This one is not priced yet. The answer will land in your History box in this app. Leave your email and we will email you the price as soon as we find it.</div>
 <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><input id="missEmail" type="email" placeholder="you@email.com" style="flex:1;min-width:180px;padding:10px;border-radius:8px;border:1px solid #6b543a;background:#1a120b;color:#f5ead9"><button class="btn" type="button" onclick="missPromptSubmit()">Email me the price</button></div>
 <div id="missMsg" style="margin-top:6px"></div>
-<div class="small" style="margin-top:8px">TrustedCigar does not sell cigars. Some links are affiliate links, disclosed site-wide; they never affect a score, a ranking, or a verdict. Adults 21+. Your email is only used to send your answer. It is never published.</div>
 <div style="margin-top:10px"><button class="secondary" type="button" onclick="missPromptClose()">No thanks</button></div>
 </div>
 </div>
@@ -1412,17 +1391,4 @@ function tcShowSnapshot(en){
      sticky Home pill and the fixed bottom Home bar were also removed
      for the same reason: three floating Home controls, two of them
      overlaying content, is what "the check screen is broken" was. -->
-<script>
-(function(){
-  var gate=document.getElementById('agegate');
-  try{ if(sessionStorage.getItem('tc-age')==='1'){ gate.style.display='none'; } }catch(e){}
-  document.getElementById('ag-yes').addEventListener('click',function(){
-    try{ sessionStorage.setItem('tc-age','1'); }catch(e){}
-    gate.style.display='none';
-  });
-  document.getElementById('ag-no').addEventListener('click',function(){
-    document.getElementById('ag-msg').textContent='Sorry — this resource is for adults 21 and older.';
-  });
-})();
-</script>
 </body></html>
