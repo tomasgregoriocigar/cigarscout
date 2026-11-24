@@ -17,7 +17,17 @@
 </style>
 </head>
 <body>
-<div id="tcBackBar" style="position:sticky;top:0;z-index:65;display:flex;gap:10px;align-items:center;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:#171310;border-bottom:1px solid #3a322a"><button type="button" onclick="tcGoBack()" style="color:#ffe1a1;background:#2b241d;border:1px solid #d8a94e;border-radius:999px;padding:9px 22px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">&#8249; Back</button><a href="/app/" style="color:#f5ead9;text-decoration:none;font-weight:600;font-size:15px;border:1px solid #6b543a;border-radius:999px;padding:9px 20px">Home</a></div><script>function tcGoBack(){try{var r=document.referrer;if(r&&new URL(r).origin===window.location.origin){window.history.back();return;}}catch(e){}window.location.href="/app/";}</script></div>
+<div id="tcBackBar" style="position:sticky;top:0;z-index:65;display:flex;gap:10px;align-items:center;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:#171310;border-bottom:1px solid #3a322a"><button type="button" onclick="tcGoBack()" style="color:#ffe1a1;background:#2b241d;border:1px solid #d8a94e;border-radius:999px;padding:9px 22px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">&#8249; Back</button><a href="/app/" style="color:#f5ead9;text-decoration:none;font-weight:600;font-size:15px;border:1px solid #6b543a;border-radius:999px;padding:9px 20px">Home</a></div><script>function tcGoBack(){try{var r=document.referrer;if(r&&new URL(r).origin===window.location.origin){window.history.back();return;}}catch(e){}window.location.href="/app/";}</script>
+
+<div id="agegate" role="dialog" aria-modal="true" aria-labelledby="ag-title">
+  <div class="box">
+    <h2 id="ag-title">Are you 21 or older?</h2>
+    <p>TrustedCigar is a price and retailer-rating resource for adults of legal smoking age. We do not sell cigars.</p>
+    <button id="ag-yes">Yes — enter</button>
+    <button class="no" id="ag-no">No</button>
+    <p class="ev" id="ag-msg"></p>
+  </div>
+</div>
 <header class="site">
   <div class="wrap">
     <div class="brand"><div class="mark">✓</div><div class="name">Trusted<b>Cigar</b></div></div>
@@ -63,6 +73,19 @@
 <footer class="site"><div class="wrap">
   <p>TrustedCigar does not sell cigars. Some links are affiliate links, disclosed site-wide; they never affect a score, a ranking, or a verdict. Adults 21+.</p>
 </div></footer>
+<script>
+(function(){
+  var gate=document.getElementById('agegate');
+  try{ var ts=parseInt(localStorage.getItem('tc-age-ts')||'0',10); if(ts>0 && (Date.now()-ts)<30*24*60*60*1000){ gate.style.display='none'; } }catch(e){}
+  document.getElementById('ag-yes').addEventListener('click',function(){
+    try{ localStorage.setItem('tc-age-ts',String(Date.now())); }catch(e){}
+    gate.style.display='none';
+  });
+  document.getElementById('ag-no').addEventListener('click',function(){
+    document.getElementById('ag-msg').textContent='Sorry — this resource is for adults 21 and older.';
+  });
+})();
+</script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1a0436df2f214d81b4258178c56bba9b"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
