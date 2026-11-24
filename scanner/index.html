@@ -118,8 +118,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <button class="secondary tcInstallDismiss" type="button">Not now</button>
 </div>
 </div>
-<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-20.1 -->
-<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-20.1</div></div>
+<div class="card"><div style="font-weight:700">The catalogue behind this scanner</div><!-- TrustedCigar scanner, build 2026-11-24.1 -->
+<div class="small" id="stats"></div><div class="small" id="buildstamp">Scanner build: 2026-11-24.1</div></div>
 <div class="card" id="tcAppCard"><div style="font-weight:700">Put TrustedCigar on your phone</div>
 <div id="tcAppForm">
 <div class="small">Get the app link by email, then save TrustedCigar to your home screen — it opens straight here, like an app, every time you reach for a cigar.</div>
@@ -136,14 +136,228 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 var TRUST_STANDING={"Neptune Cigar":"Trust-cleared — Approved","Best Cigar Prices":"Trust-cleared — Approved (BBB A+)","Cigar Page":"Trust-cleared — Approved","Smoke Inn":"Trust-cleared — Approved (BBB A+)"};
 var HIDDEN_COST={}; // No trust-cleared retailer carries a documented hidden checkout charge. Warning renders automatically when a retailer is listed here.
 var DATA=[],VIT={},META=null,UPCODES={},DATA_BY_ID={},NAME_INDEX=[];
+var TS3=null; /* typed search v3 instance, built when the catalogue shards load */
 function norm(s){return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim()}
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
 function idKey(b,l,v){return norm(b)+"|"+norm(l)+"|"+norm(v)}
+/* Typed search v3 (Proposal 14) — SHIPPED Nov 24, 2026, build
+ * 2026-11-24.1, on the owner's explicit ship decision. This is the
+ * frozen round-2 matcher exactly as scored: proven identical to the
+ * Python v3 on all 200 cases (100 original + 100 holdout). Do not
+ * tune. Rollback: republish scanner/index.html at blob 9aa35622. */
+(function (global) {
+  "use strict";
+
+  /* norm(): identical to the production scanner page. */
+  function norm(s) {
+    return (s || "").toLowerCase().normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+  }
+
+  function tokenize(s) {
+    return norm(s).split(/[^a-z0-9]+/).filter(function (w) { return w; });
+  }
+
+  var VITOLA_WORDS = new Set([
+    "toro", "robusto", "churchill", "gordo", "corona", "torpedo",
+    "belicoso", "lancero", "perfecto", "lonsdale", "rothschild",
+    "figurado", "gigante", "magnum", "epicure", "tubo", "sixty",
+    "salomon", "piramide", "diadema", "presidente", "chisel",
+    "hermoso", "dalia", "cervantes"
+  ]);
+
+  var CURATED = { uc: "undercrown", tat: "tatuaje" };
+
+  /* Damerau-Levenshtein (optimal string alignment), exact when
+   * <= limit, else some value > limit. Mirrors the Python dam(). */
+  function dam(a, b, limit) {
+    var la = a.length, lb = b.length;
+    if (Math.abs(la - lb) > limit) return limit + 1;
+    var d = [];
+    for (var i0 = 0; i0 <= la; i0++) { d.push(new Array(lb + 1).fill(0)); d[i0][0] = i0; }
+    for (var j0 = 0; j0 <= lb; j0++) d[0][j0] = j0;
+    for (var i = 1; i <= la; i++) {
+      var rowMin = i;
+      for (var j = 1; j <= lb; j++) {
+        var cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        var v = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+        if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+          v = Math.min(v, d[i - 2][j - 2] + 1);
+        }
+        d[i][j] = v;
+        if (v < rowMin) rowMin = v;
+      }
+      if (rowMin > limit) return limit + 1;
+    }
+    return d[la][lb];
+  }
+
+  function typoLimit(q, w) {
+    return (q.length >= 8 && w.length >= 8) ? 2 : 1;
+  }
+
+  function initials(words) {
+    return words.map(function (w) { return w[0]; }).join("");
+  }
+
+  function initialsAliases(words) {
+    var out = new Set();
+    var ini = initials(words);
+    if (words.length >= 2 && ini.length >= 2) {
+      out.add(ini);
+      for (var n = 2; n < ini.length; n++) out.add(ini.slice(0, n));
+    }
+    return out;
+  }
+
+  /* Python truthiness for JSON values: {}, [] and "" are falsy in
+   * Python but truthy in JS. The Python build aggregates `priced`
+   * with `if c.get("trust_prices")`, so the port must test the same
+   * way or entries with trust_prices = {} change rank. */
+  function pyTruthy(v) {
+    if (v === null || v === undefined || v === false || v === 0 || v === "") return false;
+    if (Array.isArray(v)) return v.length > 0;
+    if (typeof v === "object") return Object.keys(v).length > 0;
+    return true;
+  }
+
+  function buildEntries(DATA) {
+    var entries = [], seen = new Map();
+    DATA.forEach(function (c) {
+      var k = norm(c.brand) + "||" + norm(c.line || "");
+      var e = seen.get(k);
+      if (!e) {
+        var bw = tokenize(c.brand), lw = tokenize(c.line || "");
+        var words = [], wseen = new Set();
+        bw.concat(lw).forEach(function (w) { if (!wseen.has(w)) { wseen.add(w); words.push(w); } });
+        var brandAliases = initialsAliases(bw);
+        bw.forEach(function (w) {
+          if (w.length >= 6) brandAliases.add(w.slice(0, 3));
+          if (w.length >= 8) brandAliases.add(w.slice(0, 2));
+        });
+        var lineAliases = initialsAliases(lw);
+        words.forEach(function (w) { brandAliases.delete(w); lineAliases.delete(w); });
+        e = {
+          brand: c.brand, line: c.line || "",
+          words: words, wordset: new Set(words),
+          brandWords: new Set(bw), lineWords: new Set(lw),
+          brandAliases: brandAliases, lineAliases: lineAliases,
+          vitolaWords: new Set(), priced: false, pair: false,
+          order: entries.length
+        };
+        seen.set(k, e); entries.push(e);
+      }
+      tokenize(c.vitola || "").forEach(function (vw) { e.vitolaWords.add(vw); });
+      if (pyTruthy(c.trust_prices)) e.priced = true;
+      if ((c.vendor_count || 0) >= 2) e.pair = true;
+    });
+    return entries;
+  }
+
+  /* Returns [rank, brandSide, typoDist] or null. Mirrors word_match(). */
+  function wordMatch(q, e) {
+    if (e.wordset.has(q)) return [0, e.brandWords.has(q), 0];
+    if (Object.prototype.hasOwnProperty.call(CURATED, q)) {
+      if (e.wordset.has(CURATED[q])) return [1, e.brandWords.has(CURATED[q]), 0];
+    } else {
+      if (e.brandAliases.has(q)) return [1, true, 0];
+      if (e.lineAliases.has(q)) return [1, false, 0];
+      if (/^\d+$/.test(q) && q.length === 2) {
+        for (var n = 0; n < e.words.length; n++) {
+          var w0 = e.words[n];
+          if (/^\d+$/.test(w0) && w0.length === 4 && w0.endsWith(q)) {
+            return [1, e.brandWords.has(w0), 0];
+          }
+        }
+      }
+    }
+    if (q.length >= 4) {
+      var best = null;
+      for (var i = 0; i < e.words.length; i++) {
+        var w = e.words[i];
+        if (w.length < 4) continue;
+        if (w.startsWith(q)) continue; /* proper prefix = truncation */
+        var lim = typoLimit(q, w);
+        var dd = dam(q, w, lim);
+        if (dd <= lim && (best === null || dd < best[0])) best = [dd, e.brandWords.has(w)];
+      }
+      if (best !== null) return [2, best[1], best[0]];
+    }
+    return null;
+  }
+
+  function create(DATA) {
+    var entries = buildEntries(DATA);
+
+    /* The current production search, unchanged: substring of
+     * norm(brand + " " + line), distinct lines in DATA order. */
+    function searchBox(qRaw) {
+      var q = norm(qRaw), lines = new Map(), order = [];
+      DATA.forEach(function (c) {
+        var s = norm(c.brand + " " + (c.line || ""));
+        if (s.indexOf(q) >= 0) {
+          var k = norm(c.brand) + "||" + norm(c.line || "");
+          if (!lines.has(k)) { lines.set(k, { brand: c.brand, line: c.line || "" }); order.push(k); }
+        }
+      });
+      return { shown: order.slice(0, 12).map(function (k) { return lines.get(k); }),
+               total: order.length, path: "fallback" };
+    }
+
+    function search(qRaw) {
+      var qtoks = tokenize(qRaw);
+      var vit = qtoks.filter(function (t) { return VITOLA_WORDS.has(t); });
+      var name = qtoks.filter(function (t) { return !VITOLA_WORDS.has(t); });
+      if (name.length) {
+        var scored = [];
+        entries.forEach(function (e) {
+          var ms = name.map(function (t) { return wordMatch(t, e); });
+          if (ms.some(function (m) { return m === null; })) return;
+          scored.push({
+            anchor: ms.some(function (m) { return m[1]; }) ? 0 : 1,
+            worst: Math.max.apply(null, ms.map(function (m) { return m[0]; })),
+            typoCount: ms.filter(function (m) { return m[0] === 2; }).length,
+            typoDist: ms.reduce(function (a, m) { return a + m[2]; }, 0),
+            priced: e.priced ? 0 : 1,
+            pair: e.pair ? 0 : 1,
+            order: e.order,
+            e: e
+          });
+        });
+        if (scored.length) {
+          if (vit.length) {
+            var narrowed = scored.filter(function (s) {
+              return vit.some(function (v) { return s.e.vitolaWords.has(v); });
+            });
+            if (narrowed.length) scored = narrowed;
+          }
+          scored.sort(function (a, b) {
+            return (a.anchor - b.anchor) || (a.worst - b.worst) ||
+                   (a.typoCount - b.typoCount) || (a.typoDist - b.typoDist) ||
+                   (a.priced - b.priced) || (a.pair - b.pair) || (a.order - b.order);
+          });
+          return { shown: scored.slice(0, 12).map(function (s) {
+                     return { brand: s.e.brand, line: s.e.line }; }),
+                   total: scored.length, path: "word" };
+        }
+      }
+      return searchBox(qRaw);
+    }
+
+    return { search: search, entries: entries };
+  }
+
+  var api = { create: create, norm: norm, tokenize: tokenize };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  global.TypedSearchV3 = api;
+})(typeof window !== "undefined" ? window : globalThis);
+
 Promise.all([fetch("data-meta.json").then(r=>r.json()),fetch("data-0.json").then(r=>r.json()),fetch("data-1.json").then(r=>r.json()),fetch("data-2.json").then(r=>r.json()),fetch("data-upc.json").then(r=>r.json()).catch(function(){return null})]).then(function(p){
  META=p[0]; VIT=META.vitolas_by_line||{}; DATA=p[1].concat(p[2],p[3]);
  if(p[4]&&p[4].codes)UPCODES=p[4].codes;
  DATA.forEach(function(c){DATA_BY_ID[idKey(c.brand,c.line,c.vitola)]=c});
  buildNameIndex();
+ TS3=TypedSearchV3.create(DATA);
  if(typeof tcResolveMisses==="function"){try{tcResolveMisses()}catch(e){}}
  document.getElementById("searchStatus").textContent="Catalogue loaded: "+DATA.length+" priced cigar identities. Search to begin.";
  document.getElementById("stats").textContent="Priced identities: "+META.stats.identities_priced+" · Trust-cleared pairs: "+META.stats.trust_paired+" · Single trust price: "+META.stats.trust_single+" · Catalogue cigars total: "+META.stats.catalogue_cigars+" · Generated "+META.generated_at;
@@ -152,10 +366,9 @@ document.getElementById("btnSearch").addEventListener("click",function(){
  var q=norm(document.getElementById("q").value); var out=document.getElementById("lineResults"); out.innerHTML="";
  clearResultCards(null);
  if(!q){out.innerHTML="<div class='small'>Type a brand or line first.</div>";return}
- var lines={},order=[];
- DATA.forEach(function(c){var s=norm(c.brand+" "+(c.line||"")); if(s.indexOf(q)>=0){var k=norm(c.brand)+"||"+norm(c.line); if(!lines[k]){lines[k]={brand:c.brand,line:c.line};order.push(k)}}});
- if(!order.length){reportMiss("search","",q,"","");tcRecordMiss("","","","search",q,"");out.innerHTML="<div class='small'><b>Not found.</b> No priced line in the catalogue matches that search. Check the spelling on the band and try again.</div>";return}
- order.slice(0,12).forEach(function(k){var L=lines[k];var b=document.createElement("button");b.className="secondary";b.textContent=L.brand+(L.line?" — "+L.line:"");b.addEventListener("click",function(){pickLine(L)});out.appendChild(b)});
+ var res=(TS3||TypedSearchV3.create(DATA)).search(document.getElementById("q").value);
+ if(!res.total){reportMiss("search","",q,"","");tcRecordMiss("","","","search",q,"");out.innerHTML="<div class='small'><b>Not found.</b> No priced line in the catalogue matches that search. Check the spelling on the band and try again.</div>";return}
+ res.shown.forEach(function(L){var b=document.createElement("button");b.className="secondary";b.textContent=L.brand+(L.line?" — "+L.line:"");b.addEventListener("click",function(){pickLine(L)});out.appendChild(b)});
 });
 /* ---- Verdict focus (owner field note, Nov 6): when an answer renders,
    the scan machinery folds away behind a single "Scan another cigar"
@@ -715,7 +928,7 @@ function reportMiss(mode,brand,line,vitola,code){
  try{
   window.__tcLastMiss={mode:mode,brand:String(brand||"").slice(0,80),line:String(line||"").slice(0,120),vitola:String(vitola||"").slice(0,60),code:String(code||"").slice(0,24)};
   var member=""; try{member=localStorage.getItem("tc_member_email")||""}catch(e){}
-  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-20.1"})}).catch(function(){});
+  fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:window.__tcLastMiss.brand,line:window.__tcLastMiss.line,vitola:window.__tcLastMiss.vitola,code:window.__tcLastMiss.code,member:member,mode:mode,build:"2026-11-24.1"})}).catch(function(){});
   setTimeout(maybeMissPrompt,400);
  }catch(e){}
 }
@@ -751,7 +964,7 @@ function missPromptSubmit(){
   try{localStorage.setItem("tc_member_email",email);localStorage.setItem("tc_subscribed","1")}catch(e){}
   var lm=window.__tcLastMiss;
   if(lm){
-   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-20.1"})}).catch(function(){});
+   fetch(VISION_ENDPOINT.replace(/\/identify$/,"/miss"),{method:"POST",headers:{"Content-Type":"application/json"},keepalive:true,body:JSON.stringify({brand:lm.brand,line:lm.line,vitola:lm.vitola,code:lm.code,member:email,mode:lm.mode,build:"2026-11-24.1"})}).catch(function(){});
   }
   var body=document.getElementById("missPromptBody");
   if(body)body.innerHTML="<div style='font-weight:700;font-size:19px;margin-bottom:8px'>You're in.</div><div class='small' style='font-size:15px;line-height:1.5'>We will email you the price as soon as we find it. It will be in your History box too.</div><div style='margin-top:14px'><button class='btn' type='button' onclick='missPromptClose()'>Done</button></div>";
