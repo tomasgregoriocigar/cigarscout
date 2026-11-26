@@ -120,7 +120,7 @@ fieldset.q legend{font-size:21px;font-weight:700;padding:0 6px}
 
     <div class="prize">
       <h3>The drawing</h3>
-      <p>Everyone who completes this survey by <strong>Tuesday, November 24 at 9:00 PM ET</strong> is entered to win a <strong>$100 Cigar Page gift certificate</strong>. One entry per person. The winner is announced on the TrustedCigar page.</p>
+      <p>The drawing is closed. The winner was announced on the TrustedCigar page on Tuesday, November 24. Thank you to everyone who entered. The survey stays open, and results publish at 1,000 answers.</p>
     </div>
 
     <button class="submitbtn" id="submitBtn" type="submit">Count my answers</button>
@@ -146,7 +146,7 @@ var SURVEY_API = "https://trustedcigar-band-vision.gregoriodigital.workers.dev/s
 // automated website-only count. Tito updates MANUAL_COUNT here as answers
 // land, through the drawing, Tuesday Nov 24, 9:00 PM ET. Submissions still
 // record to the Worker exactly as before; only the display is manual.
-var MANUAL_COUNT = 511;
+var MANUAL_COUNT = 512;
 function renderCount(n){
   document.getElementById('countNow').textContent = n.toLocaleString('en-US');
   document.getElementById('countFill').style.width = Math.min(100, n/10) + '%';
