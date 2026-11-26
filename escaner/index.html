@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escáner de TrustedCigar</title>
+<meta name="robots" content="noindex">
+<style>
+  body{font-family:Georgia,serif;background:#faf6ef;color:#2b2118;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center}
+  .card{max-width:420px;padding:32px 24px;text-align:center}
+  h1{font-size:22px;margin:0 0 12px}
+  p{font-size:16px;line-height:1.5}
+  button{font-family:inherit;font-size:17px;padding:12px 28px;margin:8px;border:1px solid #2b2118;border-radius:6px;cursor:pointer}
+  .yes{background:#2b2118;color:#faf6ef}
+  .no{background:transparent;color:#2b2118}
+</style>
+</head>
+<body>
+<div class="card" id="gate" hidden>
+  <h1>TrustedCigar</h1>
+  <p>Debes tener 21 años o más para entrar. ¿Tienes 21 años o más?</p>
+  <button class="yes" id="yesBtn" type="button">Sí, tengo 21+</button>
+  <button class="no" id="noBtn" type="button">No</button>
+  <p id="denied" hidden>Debes tener 21 años o más para usar el escáner de TrustedCigar.</p>
+</div>
+<script>
+  var target = '/scanner/' + window.location.search;
+  function go(){ window.location.replace(target); }
+  try {
+    if (sessionStorage.getItem('tc-age') === '1') { go(); }
+    else {
+      document.getElementById('gate').hidden = false;
+      document.getElementById('yesBtn').addEventListener('click', function(){
+        sessionStorage.setItem('tc-age','1'); go();
+      });
+      document.getElementById('noBtn').addEventListener('click', function(){
+        document.getElementById('denied').hidden = false;
+      });
+    }
+  } catch(e) {
+    document.getElementById('gate').hidden = false;
+    document.getElementById('yesBtn').addEventListener('click', go);
+  }
+</script>
+</body>
+</html>
