@@ -120,7 +120,7 @@ fieldset.q legend{font-size:21px;font-weight:700;padding:0 6px}
 
     <div class="prize">
       <h3>La rifa</h3>
-      <p>Todos los que completen esta encuesta antes del <strong>martes 24 de noviembre a las 9:00 PM ET</strong> entran en la rifa de un <strong>certificado de regalo de $100 de Cigar Page</strong>. Una entrada por persona. El ganador se anuncia en la página de TrustedCigar.</p>
+      <p>La rifa está cerrada. El ganador fue anunciado en la página de TrustedCigar el martes 24 de noviembre. Gracias a todos los que participaron. La encuesta sigue abierta y los resultados se publican a las 1,000 respuestas.</p>
     </div>
 
     <button class="submitbtn" id="submitBtn" type="submit">Cuenta mis respuestas</button>
@@ -146,7 +146,7 @@ var SURVEY_API = "https://trustedcigar-band-vision.gregoriodigital.workers.dev/s
 // automated website-only count. Tito updates MANUAL_COUNT here as answers
 // land, through the drawing, Tuesday Nov 24, 9:00 PM ET. Submissions still
 // record to the Worker exactly as before; only the display is manual.
-var MANUAL_COUNT = 511;
+var MANUAL_COUNT = 512;
 function renderCount(n){
   document.getElementById('countNow').textContent = n.toLocaleString('en-US');
   document.getElementById('countFill').style.width = Math.min(100, n/10) + '%';
